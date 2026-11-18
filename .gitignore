@@ -1,4 +1,33 @@
 
+# C and CMake build directories
+/build*/
+/cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# Compiled and linked artifacts
+*.o
+*.obj
+*.d
+*.a
+/openrsync/openrsync
+/openrsync/afl/test-blk_recv
+/openrsync/afl/test-flist_recv
+/rsync/rsync
+
+# Configure and test output
+autom4te.cache/
+config.log
+config.status
+Makefile.configure
+.distcheck/
+
+# Xcode and macOS build metadata
+DerivedData/
+xcuserdata/
+*.xcuserstate
+
 # Emulator images, ROMs and OS media (licensed, never commit)
 /emu/
 *.utm/
