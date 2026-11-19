@@ -100,7 +100,8 @@ layout(void)
 	TECalText(in);
 
 	MoveControl(bar, r.right - 15, r.top - 1);
-	SizeControl(bar, 16, r.bottom - r.top - LINE_H - 2 + 1);
+	/* The scrollbar's last row meets the input separator. */
+	SizeControl(bar, 16, r.bottom - r.top - LINE_H + 1);
 	set_bar();
 }
 
@@ -297,7 +298,7 @@ console_update(void)
 	/* The input line: a rule above it and the prompt. */
 	MoveTo(r.left, r.bottom - LINE_H - 1);
 	LineTo(r.right - 16, r.bottom - LINE_H - 1);
-	MoveTo(r.left + 6, r.bottom - 8);
+	MoveTo(r.left + 6, (*in)->destRect.top + (*in)->fontAscent);
 	DrawString("\p" PROMPT);
 	TEUpdate(&win->portRect, in);
 	DrawControls(win);
