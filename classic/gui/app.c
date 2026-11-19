@@ -431,59 +431,46 @@ about_filter(DialogPtr d, EventRecord *ev, short *item)
 	return false;
 }
 
+/* Get a STR resource as a C string in a temporary buffer. */
+static void
+get_string_resource(short id, char *out, size_t sz)
+{
+	Handle h = GetResource('STR ', id);
+
+	if (h != NULL && sz > 0) {
+		HLock(h);
+		size_t len = (unsigned char)(**h);
+		if (len > sz - 1)
+			len = sz - 1;
+		memcpy(out, (unsigned char *)*h + 1, len);
+		HUnlock(h);
+		ReleaseResource(h);
+		out[len] = '\0';
+	} else if (sz > 0) {
+		out[0] = '\0';
+	}
+}
+
 static void
 about(void)
 {
-	static const char license[] =
-	    "MIT License\r\r"
-	    "Copyright (c) 2026 The rsyncope contributors\r\r"
-	    "Permission is hereby granted, free of charge, to any person "
-	    "obtaining a copy of this software and associated documentation "
-	    "files (the \"Software\"), to deal in the Software without "
-	    "restriction, including without limitation the rights to use, "
-	    "copy, modify, merge, publish, distribute, sublicense, and/or sell "
-	    "copies of the Software, and to permit persons to whom the Software "
-	    "is furnished to do so, subject to the following conditions:\r\r"
-	    "The above copyright notice and this permission notice shall be "
-	    "included in all copies or substantial portions of the Software.\r\r"
-	    "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, "
-	    "EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF "
-	    "MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND "
-	    "NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT "
-	    "HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, "
-	    "WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING "
-	    "FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR "
-	    "OTHER DEALINGS IN THE SOFTWARE.\r\r"
-	    "------------------------------------------------------------\r\r"
-	    "openrsync core \xD1 ISC License\r\r"
-	    "Copyright (c) 2019, Kristaps Dzonsons <kristaps@bsd.lv>\r\r"
-	    "Permission to use, copy, modify, and/or distribute this software "
-	    "for any purpose with or without fee is hereby granted, provided "
-	    "that the above copyright notice and this permission notice appear "
-	    "in all copies.\r\r"
-	    "THE SOFTWARE IS PROVIDED \"AS IS\" AND THE AUTHOR DISCLAIMS ALL "
-	    "WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED "
-	    "WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE "
-	    "AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR "
-	    "CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM "
-	    "LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, "
-	    "NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN "
-	    "CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.";
+	Handle license = GetResource('TEXT', 128);
 	Handle items = ditl_new();
 	DialogPtr d;
 	short hit = 0, w = 470, h = 260;
 	Rect r;
+	long len;
+	char title[64], desc[256], licensing[256], ok[16];
 
-	ditl_add(items, DI_BUTTON, h - 32, w - 86, h - 12, w - 14, "OK");
-	ditl_add(items, DI_STATIC, 12, 14, 28, w - 14,
-	    "rsyncope");
-	ditl_add(items, DI_STATIC, 32, 14, 64, w - 14,
-	    "A Classic Mac OS GUI and port derived from Apple's fork of "
-	    "openrsync.");
-	ditl_add(items, DI_STATIC, 68, 14, 116, w - 14,
-	    "The Mac OS implementation is licensed under the MIT License. "
-	    "Portions of the software (the openrsync core) are licensed under "
-	    "the ISC License.");
+	get_string_resource(128, title, sizeof(title));
+	get_string_resource(129, desc, sizeof(desc));
+	get_string_resource(130, licensing, sizeof(licensing));
+	get_string_resource(131, ok, sizeof(ok));
+
+	ditl_add(items, DI_BUTTON, h - 32, w - 86, h - 12, w - 14, ok);
+	ditl_add(items, DI_STATIC, 12, 14, 28, w - 14, title);
+	ditl_add(items, DI_STATIC, 32, 14, 64, w - 14, desc);
+	ditl_add(items, DI_STATIC, 68, 14, 116, w - 14, licensing);
 	r.left = (qd.screenBits.bounds.right - w) / 2;
 	r.top = qd.screenBits.bounds.top + 24;
 	r.right = r.left + w;
@@ -496,7 +483,13 @@ about(void)
 	SetRect(&r, w - 31, 118, w - 15, h - 40);
 	about_scroll = NewControl(d, &r, "\p", true, 0, 0, 0,
 	    scrollBarProc, 0);
-	TESetText((Ptr)license, (long)(sizeof(license) - 1), about_license);
+	if (license != NULL) {
+		len = GetHandleSize(license);
+		HLock(license);
+		TESetText(*license, len, about_license);
+		HUnlock(license);
+		ReleaseResource(license);
+	}
 	TECalText(about_license);
 	SetControlMaximum(about_scroll, (short)
 	    (((*about_license)->nLines >
