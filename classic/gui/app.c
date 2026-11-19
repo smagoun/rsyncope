@@ -301,13 +301,220 @@ close_front(void)
 		HideWindow(w);
 }
 
+static TEHandle about_license;
+static ControlHandle about_scroll;
+
+static short
+about_line_height(void)
+{
+	return (*about_license)->lineHeight > 0 ?
+	    (*about_license)->lineHeight : 12;
+}
+
+static int
+about_top_line(void)
+{
+	return ((*about_license)->viewRect.top -
+	    (*about_license)->destRect.top) / about_line_height();
+}
+
+static void
+about_scroll_to(int line)
+{
+	int max = GetControlMaximum(about_scroll);
+
+	if (line < 0)
+		line = 0;
+	if (line > max)
+		line = max;
+	TEScroll(0, (short)((about_top_line() - line) * about_line_height()),
+	    about_license);
+	SetControlValue(about_scroll, (short)line);
+}
+
+static pascal void
+about_scroll_action(ControlHandle control, short part)
+{
+	int page = ((*about_license)->viewRect.bottom -
+	    (*about_license)->viewRect.top) / about_line_height() - 1;
+	int line = GetControlValue(control);
+
+	if (page < 1)
+		page = 1;
+	switch (part) {
+	case inUpButton:
+		line--;
+		break;
+	case inDownButton:
+		line++;
+		break;
+	case inPageUp:
+		line -= page;
+		break;
+	case inPageDown:
+		line += page;
+		break;
+	}
+	about_scroll_to(line);
+}
+
+static void
+about_draw(DialogPtr d)
+{
+	Rect r = (*about_license)->viewRect;
+
+	InsetRect(&r, -2, -2);
+	FrameRect(&r);
+	TEUpdate(&d->portRect, about_license);
+	DrawControls(d);
+}
+
+static pascal Boolean
+about_filter(DialogPtr d, EventRecord *ev, short *item)
+{
+	ControlHandle control;
+	Point p;
+	short part;
+	char key;
+
+	SetPort(d);
+	if (ev->what == updateEvt) {
+		BeginUpdate(d);
+		EraseRect(&d->portRect);
+		DrawDialog(d);
+		about_draw(d);
+		EndUpdate(d);
+		return true;
+	}
+	if (ev->what == mouseDown) {
+		p = ev->where;
+		GlobalToLocal(&p);
+		if ((part = FindControl(p, d, &control)) != 0 &&
+		    control == about_scroll) {
+			if (part == inThumb) {
+				TrackControl(control, p, NULL);
+				about_scroll_to(GetControlValue(control));
+			} else
+				TrackControl(control, p,
+				    (ControlActionUPP)about_scroll_action);
+			return true;
+		}
+		if (PtInRect(p, &(*about_license)->viewRect)) {
+			TEClick(p, (ev->modifiers & shiftKey) != 0,
+			    about_license);
+			return true;
+		}
+		return false;
+	}
+	if (ev->what != keyDown && ev->what != autoKey)
+		return false;
+	key = (char)(ev->message & charCodeMask);
+	if (key == '\r' || key == 0x03) {
+		*item = 1;
+		return true;
+	}
+	if (ev->modifiers & cmdKey) {
+		if (key == 'c' || key == 'C') {
+			TECopy(about_license);
+			return true;
+		}
+		return false;
+	}
+	switch (key) {
+	case 0x1E:			/* Up arrow */
+		about_scroll_to(GetControlValue(about_scroll) - 1);
+		return true;
+	case 0x1F:			/* Down arrow */
+		about_scroll_to(GetControlValue(about_scroll) + 1);
+		return true;
+	}
+	return false;
+}
+
 static void
 about(void)
 {
-	app_ask("rsync for Mac OS\r\rBookmarks pull or push folders with "
-	    "an rsync server, keeping resource forks.  The console takes "
-	    "rsync commands; the server lets other computers push to this "
-	    "Mac.\r\rBased on openrsync (ISC licence).", "OK", NULL);
+	static const char license[] =
+	    "MIT License\r\r"
+	    "Copyright (c) 2026 The rsync for Classic Mac OS contributors\r\r"
+	    "Permission is hereby granted, free of charge, to any person "
+	    "obtaining a copy of this software and associated documentation "
+	    "files (the \"Software\"), to deal in the Software without "
+	    "restriction, including without limitation the rights to use, "
+	    "copy, modify, merge, publish, distribute, sublicense, and/or sell "
+	    "copies of the Software, and to permit persons to whom the Software "
+	    "is furnished to do so, subject to the following conditions:\r\r"
+	    "The above copyright notice and this permission notice shall be "
+	    "included in all copies or substantial portions of the Software.\r\r"
+	    "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, "
+	    "EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF "
+	    "MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND "
+	    "NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT "
+	    "HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, "
+	    "WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING "
+	    "FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR "
+	    "OTHER DEALINGS IN THE SOFTWARE.\r\r"
+	    "------------------------------------------------------------\r\r"
+	    "openrsync core \xD1 ISC License\r\r"
+	    "Copyright (c) 2019, Kristaps Dzonsons <kristaps@bsd.lv>\r\r"
+	    "Permission to use, copy, modify, and/or distribute this software "
+	    "for any purpose with or without fee is hereby granted, provided "
+	    "that the above copyright notice and this permission notice appear "
+	    "in all copies.\r\r"
+	    "THE SOFTWARE IS PROVIDED \"AS IS\" AND THE AUTHOR DISCLAIMS ALL "
+	    "WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED "
+	    "WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE "
+	    "AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR "
+	    "CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM "
+	    "LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, "
+	    "NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN "
+	    "CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.";
+	Handle items = ditl_new();
+	DialogPtr d;
+	short hit = 0, w = 470, h = 260;
+	Rect r;
+
+	ditl_add(items, DI_BUTTON, h - 32, w - 86, h - 12, w - 14, "OK");
+	ditl_add(items, DI_STATIC, 12, 14, 28, w - 14,
+	    "rsync for Classic Mac OS");
+	ditl_add(items, DI_STATIC, 32, 14, 64, w - 14,
+	    "A Classic Mac OS GUI and port derived from Apple's fork of "
+	    "openrsync.");
+	ditl_add(items, DI_STATIC, 68, 14, 116, w - 14,
+	    "The Mac OS implementation is licensed under the MIT License. "
+	    "Portions of the software (the openrsync core) are licensed under "
+	    "the ISC License.");
+	r.left = (qd.screenBits.bounds.right - w) / 2;
+	r.top = qd.screenBits.bounds.top + 24;
+	r.right = r.left + w;
+	r.bottom = r.top + h;
+	d = NewDialog(NULL, &r, "\pAbout rsync", true, dBoxProc,
+	    (WindowPtr)-1, false, 0, items);
+	SetPort(d);
+	SetRect(&r, 16, 120, w - 32, h - 42);
+	about_license = TENew(&r, &r);
+	SetRect(&r, w - 31, 118, w - 15, h - 40);
+	about_scroll = NewControl(d, &r, "\p", true, 0, 0, 0,
+	    scrollBarProc, 0);
+	TESetText((Ptr)license, (long)(sizeof(license) - 1), about_license);
+	TECalText(about_license);
+	SetControlMaximum(about_scroll, (short)
+	    (((*about_license)->nLines >
+	    ((*about_license)->viewRect.bottom -
+	    (*about_license)->viewRect.top) / about_line_height()) ?
+	    (*about_license)->nLines -
+	    ((*about_license)->viewRect.bottom -
+	    (*about_license)->viewRect.top) / about_line_height() : 0));
+	TEActivate(about_license);
+	SetDialogDefaultItem(d, 1);
+	about_draw(d);
+	while (hit != 1)
+		ModalDialog((ModalFilterUPP)about_filter, &hit);
+	TEDispose(about_license);
+	DisposeControl(about_scroll);
+	about_license = NULL;
+	about_scroll = NULL;
+	DisposeDialog(d);
 }
 
 static void
