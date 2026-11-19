@@ -235,28 +235,27 @@ run_server(void)
 
 /* ---- menus ------------------------------------------------------------------ */
 
-static void
+static int
 make_menus(void)
 {
-	menus[0] = NewMenu(M_APPLE, "\p\x14");
-	AppendMenu(menus[0], "\pAbout rsyncope\xc9;(-");
+	Handle mbar = GetNewMBar(128);
+
+	if (mbar == NULL) {
+		fprintf(stderr, "rsyncope: could not load menu bar resource 128\n");
+		return -1;
+	}
+	SetMenuBar(mbar);
+	for (int i = 0; i < 6; i++) {
+		menus[i] = GetMenuHandle(M_APPLE + i);
+		if (menus[i] == NULL) {
+			fprintf(stderr, "rsyncope: could not load menu %d\n",
+			    M_APPLE + i);
+			return -1;
+		}
+	}
 	AppendResMenu(menus[0], 'DRVR');
-	menus[1] = NewMenu(M_FILE, "\pFile");
-	AppendMenu(menus[1], "\pNew Bookmark/N;Open Bookmark/O;(-;Close/W;(-;"
-	    "Quit/Q");
-	menus[2] = NewMenu(M_EDIT, "\pEdit");
-	AppendMenu(menus[2], "\pUndo/Z;(-;Cut/X;Copy/C;Paste/V;Clear;"
-	    "Select All/A");
-	menus[3] = NewMenu(M_SYNC, "\pSync");
-	AppendMenu(menus[3], "\pSync Now/R;Preview/P;Stop/.;(-;"
-	    "Copy Command to Console");
-	menus[4] = NewMenu(M_SERVER, "\pServer");
-	AppendMenu(menus[4], "\pStart Server;Start Server at Launch");
-	menus[5] = NewMenu(M_WINDOW, "\pWindow");
-	AppendMenu(menus[5], "\pBookmarks/1;Console/2");
-	for (int i = 0; i < 6; i++)
-		InsertMenu(menus[i], 0);
 	DrawMenuBar();
+	return 0;
 }
 
 static void
@@ -830,7 +829,8 @@ main(void)
 	FlushEvents(everyEvent, 0);
 	gui_TEFromScrap();
 
-	make_menus();
+	if (make_menus() != 0)
+		return 1;
 	bm_load();
 	console_open();
 	bookmarks_open();
