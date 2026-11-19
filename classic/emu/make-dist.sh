@@ -1,19 +1,19 @@
 #!/bin/sh
 # Package the built app for download:
-#   <out>/rsync-classic.img   1.44 MB HFS disk image (UTM/QEMU, or dd to a floppy)
+#   <out>/rsyncope.img        1.44 MB HFS disk image (UTM/QEMU, or dd to a floppy)
 #   <out>/rsync.bin           the application as MacBinary (StuffIt Expander)
 #   <out>/rsync-console.bin   the console-only version, as MacBinary
 # usage: classic/emu/make-dist.sh <out-dir> [gui.bin] [console.bin]
 set -e
 S="$(cd "$(dirname "$0")" && pwd)"
 OUT=$1
-APP=${2:-$S/../../../Retro68-build/classic/gui/rsyncgui.bin}
+APP=${2:-$S/../../../Retro68-build/classic/gui/rsyncope.bin}
 CLI=${3:-$S/../../../Retro68-build/classic/rsync/rsync.bin}
 mkdir -p "$OUT"
 T=$(mktemp -d)
 export HOME=$T
 cat > "$T/readme" <<'TXT'
-rsync for Mac OS (68k)
+rsyncope
 
 "rsync" opens two windows:
 
@@ -50,9 +50,9 @@ prompt), for scripting.
 Give rsync at least 8 MB (Get Info > Memory) for large trees.
 TXT
 printf '# rsync prefs: NAME = value, used as $(NAME) in commands\n# SRV = 192.168.1.10\n' > "$T/prefs"
-dd if=/dev/zero of="$OUT/rsync-classic.img" bs=1024 count=1440 2>/dev/null
-hformat -l "rsync" "$OUT/rsync-classic.img" >/dev/null
-hmount "$OUT/rsync-classic.img" >/dev/null
+dd if=/dev/zero of="$OUT/rsyncope.img" bs=1024 count=1440 2>/dev/null
+hformat -l "rsyncope" "$OUT/rsyncope.img" >/dev/null
+hmount "$OUT/rsyncope.img" >/dev/null
 hcopy -m "$APP" ":rsync"
 hcopy -m "$CLI" ":rsync console"
 printf '# rsyncd.conf: folders this Mac serves (paths as /Disk/Folder)\n[incoming]\n    path = /Macintosh HD/Incoming\n    read only = no\n    use chroot = no\n' | tr '\n' '\r' > "$T/conf"
