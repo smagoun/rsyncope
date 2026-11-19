@@ -204,6 +204,20 @@ _consoleread(int fd, void *buf, size_t len)
 
 /* ---- the window ----------------------------------------------------------- */
 
+static void
+draw_grow_box(void)
+{
+	RgnHandle save = NewRgn();
+	Rect r = win->portRect;
+
+	GetClip(save);
+	r.left = r.right - 15;
+	ClipRect(&r);
+	DrawGrowIcon(win);
+	SetClip(save);
+	DisposeRgn(save);
+}
+
 void
 console_open(void)
 {
@@ -261,7 +275,7 @@ console_update(void)
 	DrawString("\p" PROMPT);
 	TEUpdate(&win->portRect, in);
 	DrawControls(win);
-	DrawGrowIcon(win);
+	draw_grow_box();
 	EndUpdate(win);
 	SetPort(old);
 }
@@ -280,7 +294,7 @@ console_activate(int on)
 		TEDeactivate(focus);
 		HiliteControl(bar, 255);
 	}
-	DrawGrowIcon(win);
+	draw_grow_box();
 	SetPort(old);
 }
 
