@@ -272,6 +272,7 @@ app_update_menus(void)
 {
 	int sel = bookmarks_selected();
 	Str255 t;
+	char title[256];
 
 	if (menus[3] == NULL)
 		return;
@@ -280,8 +281,11 @@ app_update_menus(void)
 	enable(menus[3], S_STOP, job_running);
 	enable(menus[3], S_TOCONSOLE, sel >= 0);
 	enable(menus[1], F_OPEN, sel >= 0);
-	c2p(server_wanted ? "Stop Server" : "Start Server", t);
-	SetMenuItemText(menus[4], V_TOGGLE, t);
+	if (gui_string(server_wanted ? STR_SERVER_STOP : STR_SERVER_START,
+	    title, sizeof(title)) == 0) {
+		c2p(title, t);
+		SetMenuItemText(menus[4], V_TOGGLE, t);
+	}
 	CheckMenuItem(menus[4], V_LAUNCH, pref_start_server);
 }
 
@@ -736,43 +740,6 @@ app_event(EventRecord *ev)
 
 /* ---- small dialogs ------------------------------------------------------------ */
 
-Handle
-ditl_new(void)
-{
-	Handle h = NewHandle(2);
-
-	(*(short **)h)[0] = -1;		/* item count - 1 */
-	return h;
-}
-
-int
-ditl_add(Handle h, int type, short top, short left, short bottom,
-    short right, const char *text)
-{
-	size_t len = text ? strlen(text) : 0, old = (size_t)GetHandleSize(h);
-	size_t add;
-	unsigned char *p;
-	short *s;
-
-	if (len > 255)
-		len = 255;
-	/* placeholder, rect, type, length byte, data padded to even */
-	add = 4 + 8 + 1 + 1 + len + (len & 1);
-	SetHandleSize(h, (Size)(old + add));
-	p = (unsigned char *)*h + old;
-	memset(p, 0, add);
-	s = (short *)(p + 4);
-	s[0] = top;
-	s[1] = left;
-	s[2] = bottom;
-	s[3] = right;
-	p[12] = (unsigned char)type;
-	p[13] = (unsigned char)len;
-	if (len)
-		memcpy(p + 14, text, len);
-	return ++(*(short **)h)[0] + 1;
-}
-
 int
 app_ask(const char *msg, const char *ok, const char *cancel)
 {
@@ -815,7 +782,44 @@ app_ask(const char *msg, const char *ok, const char *cancel)
 void
 app_note(const char *msg)
 {
-	app_ask(msg, "OK", NULL);
+	char ok[256];
+
+	if (gui_string(STR_OK, ok, sizeof(ok)) == 0)
+		app_ask(msg, ok, NULL);
+}
+
+int
+gui_string(short id, char *out, size_t size)
+{
+	Handle h = GetResource('STR ', id);
+	size_t len;
+
+	if (h == NULL) {
+		fprintf(stderr, "rsyncope: missing STR resource %d\n", id);
+		return -1;
+	}
+	HLock(h);
+	len = (unsigned char)(**h);
+	if (len >= size) {
+		HUnlock(h);
+		ReleaseResource(h);
+		fprintf(stderr, "rsyncope: STR resource %d is too long\n", id);
+		return -1;
+	}
+	memcpy(out, *h + 1, len);
+	out[len] = '\0';
+	HUnlock(h);
+	ReleaseResource(h);
+	return 0;
+}
+
+void
+gui_note(short id)
+{
+	char text[256];
+
+	if (gui_string(id, text, sizeof(text)) == 0)
+		app_note(text);
 }
 
 void
@@ -876,7 +880,8 @@ main(void)
 	if (make_menus() != 0)
 		return 1;
 	bm_load();
-	console_open();
+	if (!console_open())
+		return 1;
 	bookmarks_open();
 	server_wanted = pref_start_server;
 	app_update_menus();

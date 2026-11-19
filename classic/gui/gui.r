@@ -7,6 +7,21 @@ type 'TEXT' {
 	string;
 };
 
+/* Retro68's Multiversal Rez headers do not define CNTL. */
+#ifndef __CONTROLS_R__
+type 'CNTL' {
+	rect;
+	integer;
+	byte;
+	fill byte;
+	integer;
+	integer;
+	integer;
+	longint;
+	pstring;
+};
+#endif
+
 /* About dialog strings */
 resource 'STR ' (128) {
 	"rsyncope"
@@ -26,6 +41,25 @@ resource 'STR ' (131) {
 	"OK"
 };
 
+resource 'STR ' (132) { "Start Server" };
+resource 'STR ' (133) { "Stop Server" };
+resource 'STR ' (134) { "Server off" };
+resource 'STR ' (135) { "Server on: rsync://" };
+resource 'STR ' (136) { "Delete this bookmark?" };
+resource 'STR ' (137) { "Delete" };
+resource 'STR ' (138) { "Cancel" };
+resource 'STR ' (139) { "Please fill in a name." };
+resource 'STR ' (140) { "Please fill in the server." };
+resource 'STR ' (141) { "Please fill in the module." };
+resource 'STR ' (142) { "Please fill in the local folder." };
+resource 'STR ' (143) {
+	"The local folder must be a full path such as "
+	"\"Macintosh HD:Projects:MyApp:\" (use Choose...)."
+};
+resource 'STR ' (144) { "There are too many bookmarks." };
+resource 'STR ' (145) { "Open the folder to sync, then click Save:" };
+resource 'STR ' (146) { "(this folder)" };
+resource 'STR ' (147) { "Could not save the bookmarks file \"rsync Bookmarks\"." };
 resource 'DLOG' (128) {
 	{ 0, 0, 260, 470 },
 	dBoxProc,
@@ -67,6 +101,83 @@ resource 'DITL' (129) {
 		{ 12, 14, 90, 326 }, StaticText { disabled, "" };
 	}
 };
+
+/* Bookmark editor. Item order matches editor.c. */
+resource 'DLOG' (130) {
+	{ 44, 60, 494, 540 },
+	noGrowDocProc,
+	invisible,
+	goAway,
+	2,
+	130,
+	"New Bookmark",
+	noAutoCenter
+};
+
+resource 'DITL' (130) {
+	{
+		{ 418, 396, 438, 466 }, Button { enabled, "Save" };
+		{ 418, 316, 438, 386 }, Button { enabled, "Cancel" };
+		{ 418, 96, 438, 166 }, Button { enabled, "Sync" };
+		{ 418, 14, 438, 86 }, Button { enabled, "Preview" };
+		{ 12, 14, 28, 104 }, StaticText { disabled, "Name:" };
+		{ 12, 110, 28, 466 }, EditText { enabled, "" };
+		{ 38, 110, 56, 260 }, RadioButton { enabled, "Pull from server" };
+		{ 38, 270, 56, 420 }, RadioButton { enabled, "Push to server" };
+		{ 64, 14, 80, 104 }, StaticText { disabled, "Server:" };
+		{ 64, 110, 80, 340 }, EditText { enabled, "" };
+		{ 64, 352, 80, 394 }, StaticText { disabled, "Port:" };
+		{ 64, 400, 80, 466 }, EditText { enabled, "" };
+		{ 90, 14, 106, 104 }, StaticText { disabled, "Module:" };
+		{ 90, 110, 106, 220 }, EditText { enabled, "" };
+		{ 90, 232, 106, 274 }, StaticText { disabled, "Path:" };
+		{ 90, 280, 106, 466 }, EditText { enabled, "" };
+		{ 116, 14, 132, 104 }, StaticText { disabled, "User:" };
+		{ 116, 110, 132, 220 }, EditText { enabled, "" };
+		{ 116, 232, 132, 304 }, StaticText { disabled, "Password:" };
+		{ 116, 310, 132, 466 }, EditText { enabled, "" };
+		{ 142, 14, 158, 104 }, StaticText { disabled, "Local folder:" };
+		{ 142, 110, 158, 380 }, EditText { enabled, "" };
+		{ 140, 390, 160, 466 }, Button { enabled, "Choose\0xC9" };
+		{ 174, 14, 192, 466 }, CheckBox { enabled,
+		    "Resource forks and Finder info (netatalk ._ files)" };
+		{ 194, 14, 212, 466 }, CheckBox { enabled,
+		    "Server is a Mac running OS X (Apple -E)" };
+		{ 214, 14, 232, 466 }, CheckBox { enabled,
+		    "Delete files that are not in the source" };
+		{ 234, 14, 252, 466 }, CheckBox { enabled,
+		    "Set type and creator by name (--mac-types)" };
+		{ 254, 14, 272, 220 }, CheckBox { enabled, "Mac line endings for:" };
+		{ 255, 226, 271, 466 }, EditText { enabled, "" };
+		{ 274, 14, 292, 466 }, CheckBox { enabled,
+		    "Ignore 1-hour (daylight saving) differences" };
+		{ 294, 14, 312, 150 }, CheckBox { enabled, "Compress" };
+		{ 294, 160, 312, 466 }, CheckBox { enabled, "Compare contents (slow)" };
+		{ 320, 14, 336, 104 }, StaticText { disabled, "Exclude:" };
+		{ 320, 110, 336, 466 }, EditText { enabled, "" };
+		{ 346, 14, 378, 380 }, StaticText { disabled, "" };
+		{ 350, 390, 370, 466 }, Button { enabled, "To Console" };
+	}
+};
+
+resource 'WIND' (128) {
+	{ 42, 10, 312, 530 }, documentProc, visible, goAway, 0,
+	"rsync Bookmarks", noAutoCenter
+};
+
+resource 'WIND' (129) {
+	{ 340, 10, 590, 630 }, documentProc, visible, goAway, 1,
+	"rsync Console", noAutoCenter
+};
+
+/* Bookmark buttons and the console scroll bar. Layout is adjusted on resize. */
+resource 'CNTL' (128) { { 0, 0, 20, 66 }, 0, 1, 1, 0, 0, 0, "New\0xC9" };
+resource 'CNTL' (129) { { 0, 0, 20, 66 }, 0, 1, 1, 0, 0, 1, "Edit\0xC9" };
+resource 'CNTL' (130) { { 0, 0, 20, 66 }, 0, 1, 1, 0, 0, 2, "Delete" };
+resource 'CNTL' (131) { { 0, 0, 20, 72 }, 0, 1, 1, 0, 0, 3, "Preview" };
+resource 'CNTL' (132) { { 0, 0, 20, 72 }, 0, 1, 1, 0, 0, 4, "Sync" };
+resource 'CNTL' (133) { { 0, 0, 20, 96 }, 0, 1, 1, 0, 0, 5, "Stop Server" };
+resource 'CNTL' (134) { { 0, 0, 100, 16 }, 0, 1, 0, 0, 16, 0, "" };
 
 /* Memory for rsync: the file list and buffers need a few megabytes. */
 resource 'SIZE' (-1) {
@@ -202,7 +313,7 @@ resource 'TEXT' (128) {
 	"FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR "
 	"OTHER DEALINGS IN THE SOFTWARE.\r\r"
 	"------------------------------------------------------------\r\r"
-	"openrsync core \xD1 ISC License\r\r"
+	"openrsync core \0xD1 ISC License\r\r"
 	"Copyright (c) 2019, Kristaps Dzonsons <kristaps@bsd.lv>\r\r"
 	"Permission to use, copy, modify, and/or distribute this software "
 	"for any purpose with or without fee is hereby granted, provided "
