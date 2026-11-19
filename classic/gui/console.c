@@ -24,6 +24,7 @@ static WindowPtr win;
 static TEHandle out, in;
 static TEHandle focus;		/* which one the Edit menu acts on */
 static ControlHandle bar;
+static int opening;
 static char *history[HIST_MAX];
 static int nhist, hpos;
 
@@ -114,8 +115,8 @@ console_write(const char *text, size_t len)
 	GrafPtr old;
 	Handle h;
 
-	if (win == NULL)
-		console_open();
+	if (win == NULL && !console_open())
+		return;
 	GetPort(&old);
 	SetPort(win);
 	pinned = GetControlValue(bar) >= GetControlMaximum(bar) - 1;
@@ -218,26 +219,32 @@ draw_grow_box(void)
 	DisposeRgn(save);
 }
 
-void
+int
 console_open(void)
 {
-	Rect r, vr;
-	Str255 t;
+	Rect vr;
+	GrafPtr old;
 
 	if (win != NULL)
-		return;
-	SetRect(&r, 10, 340, 10 + 620, 340 + 250);
-	c2p("rsync Console", t);
-	win = NewWindow(NULL, &r, t, true, documentProc, (WindowPtr)-1, true,
-	    1);
+		return 1;
+	if (opening)
+		return 0;
+	opening = 1;
+	GetPort(&old);
+	win = GetNewWindow(129, NULL, (WindowPtr)-1);
+	if (win == NULL)
+		goto fail;
 	SetPort(win);
 	TextFont(4);	/* Monaco */
 	TextSize(9);
 	SetRect(&vr, 4, 2, 100, 100);
 	out = TENew(&vr, &vr);
 	in = TENew(&vr, &vr);
-	SetRect(&r, 0, 0, 16, 100);
-	bar = NewControl(win, &r, "\p", true, 0, 0, 0, scrollBarProc, 0);
+	if (out == NULL || in == NULL)
+		goto fail;
+	bar = GetNewControl(134, win);
+	if (bar == NULL)
+		goto fail;
 	focus = in;
 	layout();
 	TEActivate(in);
@@ -245,13 +252,32 @@ console_open(void)
 	    "  rsync -av server::module/dir/ \"Macintosh HD:Projects:\"\r"
 	    "Up and Down arrows recall earlier commands.  \"help\" lists "
 	    "the built-in ones.\r");
+	opening = 0;
+	return 1;
+
+fail:
+	if (out != NULL)
+		TEDispose(out);
+	if (in != NULL)
+		TEDispose(in);
+	out = in = focus = NULL;
+	if (win != NULL) {
+		SetPort(old);
+		DisposeWindow(win);
+	}
+	win = NULL;
+	bar = NULL;
+	SysBeep(1);
+	app_note("Could not open the console window.");
+	opening = 0;
+	return 0;
 }
 
 void
 console_show(void)
 {
-	if (win == NULL)
-		console_open();
+	if (win == NULL && !console_open())
+		return;
 	ShowWindow(win);
 	SelectWindow(win);
 }
@@ -406,7 +432,8 @@ void
 console_set_input(const char *s)
 {
 	console_show();
-	set_input(s);
+	if (win != NULL)
+		set_input(s);
 }
 
 static pascal void

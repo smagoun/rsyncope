@@ -2,9 +2,8 @@
  * editor.c: the window that reviews and edits one bookmark.
  *
  * Double-clicking a bookmark opens it here for review; nothing runs until
- * Sync or Preview is clicked.  It is a modeless dialog whose item list is
- * built in memory (ditl_add), so the Dialog Manager handles the text
- * fields, Tab, and the clipboard.
+ * Sync or Preview is clicked.  The modeless dialog uses a DITL resource,
+ * so the Dialog Manager handles the text fields, Tab, and the clipboard.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -289,79 +288,10 @@ editor_edit(int what)
 
 /* ---- building the window -------------------------------------------------- */
 
-static Handle
-build_items(void)
-{
-	Handle h = ditl_new();
-	short y;
-
-	/* Order must match the enum. */
-	ditl_add(h, DI_BUTTON, 418, 396, 438, 466, "Save");
-	ditl_add(h, DI_BUTTON, 418, 316, 438, 386, "Cancel");
-	ditl_add(h, DI_BUTTON, 418, 96, 438, 166, "Sync");
-	ditl_add(h, DI_BUTTON, 418, 14, 438, 86, "Preview");
-
-	y = 12;
-	ditl_add(h, DI_STATIC, y, 14, y + 16, 104, "Name:");
-	ditl_add(h, DI_EDIT, y, 110, y + 16, 466, "");
-	y += 26;
-	ditl_add(h, DI_RADIO, y, 110, y + 18, 260, "Pull from server");
-	ditl_add(h, DI_RADIO, y, 270, y + 18, 420, "Push to server");
-	y += 26;
-	ditl_add(h, DI_STATIC, y, 14, y + 16, 104, "Server:");
-	ditl_add(h, DI_EDIT, y, 110, y + 16, 340, "");
-	ditl_add(h, DI_STATIC, y, 352, y + 16, 394, "Port:");
-	ditl_add(h, DI_EDIT, y, 400, y + 16, 466, "");
-	y += 26;
-	ditl_add(h, DI_STATIC, y, 14, y + 16, 104, "Module:");
-	ditl_add(h, DI_EDIT, y, 110, y + 16, 220, "");
-	ditl_add(h, DI_STATIC, y, 232, y + 16, 274, "Path:");
-	ditl_add(h, DI_EDIT, y, 280, y + 16, 466, "");
-	y += 26;
-	ditl_add(h, DI_STATIC, y, 14, y + 16, 104, "User:");
-	ditl_add(h, DI_EDIT, y, 110, y + 16, 220, "");
-	ditl_add(h, DI_STATIC, y, 232, y + 16, 304, "Password:");
-	ditl_add(h, DI_EDIT, y, 310, y + 16, 466, "");
-	y += 26;
-	ditl_add(h, DI_STATIC, y, 14, y + 16, 104, "Local folder:");
-	ditl_add(h, DI_EDIT, y, 110, y + 16, 380, "");
-	ditl_add(h, DI_BUTTON, y - 2, 390, y + 18, 466, "Choose\xc9");
-
-	y += 32;
-	ditl_add(h, DI_CHECK, y, 14, y + 18, 466,
-	    "Resource forks and Finder info (netatalk ._ files)");
-	y += 20;
-	ditl_add(h, DI_CHECK, y, 14, y + 18, 466,
-	    "Server is a Mac running OS X (Apple -E)");
-	y += 20;
-	ditl_add(h, DI_CHECK, y, 14, y + 18, 466,
-	    "Delete files that are not in the source");
-	y += 20;
-	ditl_add(h, DI_CHECK, y, 14, y + 18, 466,
-	    "Set type and creator by name (--mac-types)");
-	y += 20;
-	ditl_add(h, DI_CHECK, y, 14, y + 18, 220, "Mac line endings for:");
-	ditl_add(h, DI_EDIT, y + 1, 226, y + 17, 466, "");
-	y += 20;
-	ditl_add(h, DI_CHECK, y, 14, y + 18, 466,
-	    "Ignore 1-hour (daylight saving) differences");
-	y += 20;
-	ditl_add(h, DI_CHECK, y, 14, y + 18, 150, "Compress");
-	ditl_add(h, DI_CHECK, y, 160, y + 18, 466, "Compare contents (slow)");
-	y += 26;
-	ditl_add(h, DI_STATIC, y, 14, y + 16, 104, "Exclude:");
-	ditl_add(h, DI_EDIT, y, 110, y + 16, 466, "");
-	y += 26;
-	ditl_add(h, DI_STATIC, y, 14, y + 32, 380, "");
-	ditl_add(h, DI_BUTTON, y + 4, 390, y + 24, 466, "To Console");
-	return h;
-}
-
 void
 editor_open(int index)
 {
 	struct bookmark b;
-	Rect r;
 	Str255 t;
 
 	if (dlg != NULL) {
@@ -378,14 +308,20 @@ editor_open(int index)
 		bm_defaults(&b);
 		strcpy(b.name, "New bookmark");
 	}
-	SetRect(&r, 60, 44, 60 + 480, 44 + 450);
-	c2p(index >= 0 ? b.name : "New Bookmark", t);
-	dlg = NewDialog(NULL, &r, t, true, noGrowDocProc, (WindowPtr)-1, true,
-	    2, build_items());
+	dlg = GetNewDialog(130, NULL, (WindowPtr)-1);
+	if (dlg == NULL) {
+		app_note("Could not open the bookmark editor.");
+		return;
+	}
+	if (index >= 0) {
+		c2p(b.name, t);
+		SetWTitle(dlg, t);
+	}
 	SetPort(dlg);
 	write_fields(&b);
 	show_command();
 	SelectDialogItemText(dlg, I_HOST, 0, 32767);
+	ShowWindow(dlg);
 }
 
 void
@@ -430,10 +366,15 @@ static void
 choose_folder(void)
 {
 	StandardFileReply reply;
-	char path[256];
+	char path[256], prompt[256], name[256];
+	Str255 p, n;
 
-	StandardPutFile("\pOpen the folder to sync, then click Save:",
-	    "\p(this folder)", &reply);
+	if (gui_string(STR_CHOOSE_PROMPT, prompt, sizeof(prompt)) != 0 ||
+	    gui_string(STR_CHOOSE_NAME, name, sizeof(name)) != 0)
+		return;
+	c2p(prompt, p);
+	c2p(name, n);
+	StandardPutFile(p, n, &reply);
 	if (!reply.sfGood)
 		return;
 	folder_path(reply.sfFile.vRefNum, reply.sfFile.parID, path,
@@ -448,37 +389,33 @@ save(void)
 {
 	struct bookmark b;
 	char *posix, utf8[600];
-	const char *missing = NULL;
+	short missing = 0;
 
 	bm_defaults(&b);
 	if (editing >= 0)
 		b = bookmarks[editing];
 	read_fields(&b);
 	if (b.name[0] == '\0')
-		missing = "a name";
+		missing = STR_NEED_NAME;
 	else if (b.host[0] == '\0')
-		missing = "the server";
+		missing = STR_NEED_SERVER;
 	else if (b.module[0] == '\0')
-		missing = "the module";
+		missing = STR_NEED_MODULE;
 	else if (b.local[0] == '\0')
-		missing = "the local folder";
-	if (missing != NULL) {
-		char msg[96];
-
-		snprintf(msg, sizeof(msg), "Please fill in %s.", missing);
-		app_note(msg);
+		missing = STR_NEED_LOCAL;
+	if (missing != 0) {
+		gui_note(missing);
 		return -1;
 	}
 	engine_macroman_to_utf8(b.local, utf8, sizeof(utf8));
 	if ((posix = engine_hfs_arg(strchr(utf8, ':') ? utf8 : "x")) == NULL) {
-		app_note("The local folder must be a full path such as "
-		    "\"Macintosh HD:Projects:MyApp:\" (use Choose...).");
+		gui_note(STR_BAD_LOCAL);
 		return -1;
 	}
 	free(posix);
 	if (editing < 0) {
 		if (nbookmarks == BM_MAX) {
-			app_note("There are too many bookmarks.");
+			gui_note(STR_TOO_MANY);
 			return -1;
 		}
 		editing = nbookmarks++;

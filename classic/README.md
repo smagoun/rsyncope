@@ -107,6 +107,11 @@ netatalk keeps each file's resource fork and Finder info in a `._name` sidecar f
 | `tests/` | Host tests (`make -C classic/tests check`): `--netatalk` and `--mac-types`/`--mac-text`/`--dst-window` end to end against a stock rsync daemon, name rules, printf |
 | `emu/` | QEMU q800 scripts (`try-rsync.sh` for a client run, `try-daemon.sh` boots the Mac running the daemon and pushes to it through a forwarded port): boot unattended, run a test app or an rsync script, read the log back with `hfsutils`; `make-dist.sh` packages the app as a 1.44 MB disk image and MacBinary |
 
+The GUI's menus, dialog layouts, initial window and control definitions, and
+static interface text are in `gui/gui.r`. Editor DITL item order must match
+the item enum in `gui/editor.c`; window resizing, list contents, TextEdit,
+and dynamic control state remain in code.
+
 ## Building
 
 ```bash

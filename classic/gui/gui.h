@@ -77,7 +77,7 @@ void	editor_edit(int);	/* Edit menu command */
 
 /* ---- console ------------------------------------------------------------ */
 
-void	console_open(void);
+int	console_open(void);
 void	console_show(void);
 int	console_is(WindowPtr);
 void	console_event(EventRecord *);
@@ -100,12 +100,17 @@ int	app_server_running(void);
 void	app_update_menus(void);
 void	app_note(const char *);			/* small alert */
 
-/* Dialog item lists built in memory (no resources needed). */
-enum { DI_BUTTON = 4, DI_CHECK = 5, DI_RADIO = 6, DI_STATIC = 8 | 128,
-    DI_EDIT = 16, DI_USER = 0 | 128 };
-Handle	ditl_new(void);
-int	ditl_add(Handle, int type, short top, short left, short bottom,
-	    short right, const char *text);	/* returns the item number */
+/* STR resource IDs used by the GUI. */
+enum {
+	STR_OK = 131, STR_SERVER_START, STR_SERVER_STOP, STR_SERVER_OFF,
+	STR_SERVER_ON, STR_DELETE_QUESTION, STR_DELETE, STR_CANCEL,
+	STR_NEED_NAME, STR_NEED_SERVER, STR_NEED_MODULE, STR_NEED_LOCAL,
+	STR_BAD_LOCAL, STR_TOO_MANY, STR_CHOOSE_PROMPT, STR_CHOOSE_NAME,
+	STR_SAVE_FAILED
+};
+int	gui_string(short, char *, size_t);
+void	gui_note(short);
+
 /* Modal alert: returns 1 for OK, 2 for Cancel, or 0 on error. */
 int	app_ask(const char *msg, const char *ok, const char *cancel);
 

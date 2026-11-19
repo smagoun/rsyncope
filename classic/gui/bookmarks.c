@@ -159,7 +159,7 @@ bm_save(void)
 	int i;
 
 	if ((f = fopen(BM_FILE, "w")) == NULL) {
-		app_note("Could not save the bookmarks file \"" BM_FILE "\".");
+		gui_note(STR_SAVE_FAILED);
 		return -1;
 	}
 	fprintf(f, "# rsync bookmarks (edit with care)\r");
@@ -350,9 +350,6 @@ enum { B_NEW, B_EDIT, B_DELETE, B_PREVIEW, B_SYNC, B_SERVER, NBUTTONS };
 static WindowPtr win;
 static ListHandle list;
 static ControlHandle buttons[NBUTTONS];
-static const char *const button_titles[NBUTTONS] = {
-	"New\xc9", "Edit\xc9", "Delete", "Preview", "Sync", "Stop Server"
-};
 
 int
 bookmarks_is(WindowPtr w)
@@ -457,11 +454,15 @@ void
 bookmarks_server_changed(void)
 {
 	Str255 t;
+	char title[256];
 	GrafPtr old;
 
 	if (win == NULL)
 		return;
-	c2p(app_server_running() ? "Stop Server" : "Start Server", t);
+	if (gui_string(app_server_running() ? STR_SERVER_STOP :
+	    STR_SERVER_START, title, sizeof(title)) != 0)
+		return;
+	c2p(title, t);
 	SetControlTitle(buttons[B_SERVER], t);
 	GetPort(&old);
 	SetPort(win);
@@ -474,7 +475,7 @@ bookmarks_open(void)
 {
 	Rect r, dataBounds;
 	Point cell;
-	Str255 t;
+	GrafPtr old;
 	int i;
 
 	if (win != NULL) {
@@ -482,10 +483,10 @@ bookmarks_open(void)
 		SelectWindow(win);
 		return;
 	}
-	SetRect(&r, 10, 42, 10 + 520, 42 + 270);
-	c2p("rsync Bookmarks", t);
-	win = NewWindow(NULL, &r, t, true, documentProc, (WindowPtr)-1, true,
-	    0);
+	GetPort(&old);
+	win = GetNewWindow(128, NULL, (WindowPtr)-1);
+	if (win == NULL)
+		goto fail;
 	SetPort(win);
 	TextFont(1);	/* application font (Geneva) */
 	TextSize(10);
@@ -494,17 +495,31 @@ bookmarks_open(void)
 	cell.h = 0;
 	cell.v = 0;
 	list = LNew(&r, &dataBounds, cell, 0, win, true, false, false, true);
+	if (list == NULL)
+		goto fail;
 	(*list)->selFlags = lOnlyOne;
 	for (i = 0; i < NBUTTONS; i++) {
-		c2p(button_titles[i], t);
-		SetRect(&r, 0, 0, i == B_SERVER ? 96 : (i >= B_PREVIEW ? 72 :
-		    66), 20);
-		buttons[i] = NewControl(win, &r, t, true, 0, 0, 1, pushButProc,
-		    i);
+		buttons[i] = GetNewControl(128 + i, win);
+		if (buttons[i] == NULL)
+			goto fail;
 	}
 	layout();
 	bookmarks_refresh();
 	bookmarks_server_changed();
+	return;
+
+fail:
+	if (list != NULL)
+		LDispose(list);
+	list = NULL;
+	if (win != NULL) {
+		SetPort(old);
+		DisposeWindow(win);
+	}
+	win = NULL;
+	for (i = 0; i < NBUTTONS; i++)
+		buttons[i] = NULL;
+	app_note("Could not open the bookmarks window.");
 }
 
 /*
@@ -531,16 +546,18 @@ static void
 draw_status(void)
 {
 	Rect r = win->portRect;
-	char s[160];
+	char s[256], label[256];
 	Str255 t;
 	unsigned long ip;
 
 	if (app_server_running()) {
+		if (gui_string(STR_SERVER_ON, label, sizeof(label)) != 0)
+			return;
 		ip = mp_local_ip();
-		snprintf(s, sizeof(s), "Server on: rsync://%lu.%lu.%lu.%lu/",
+		snprintf(s, sizeof(s), "%s%lu.%lu.%lu.%lu/", label,
 		    ip >> 24, (ip >> 16) & 255, (ip >> 8) & 255, ip & 255);
-	} else
-		snprintf(s, sizeof(s), "Server off");
+	} else if (gui_string(STR_SERVER_OFF, s, sizeof(s)) != 0)
+		return;
 	c2p(s, t);
 	MoveTo(12, r.bottom - 15 - 5);
 	DrawString(t);
@@ -605,6 +622,7 @@ static void
 do_button(int which)
 {
 	int sel = bookmarks_selected();
+	char question[256], yes[256], no[256];
 
 	switch (which) {
 	case B_NEW:
@@ -615,8 +633,11 @@ do_button(int which)
 			editor_open(sel);
 		break;
 	case B_DELETE:
-		if (sel >= 0 && app_ask("Delete this bookmark?", "Delete",
-		    "Cancel") == 1) {
+		if (sel >= 0 &&
+		    gui_string(STR_DELETE_QUESTION, question, sizeof(question)) == 0 &&
+		    gui_string(STR_DELETE, yes, sizeof(yes)) == 0 &&
+		    gui_string(STR_CANCEL, no, sizeof(no)) == 0 &&
+		    app_ask(question, yes, no) == 1) {
 			memmove(&bookmarks[sel], &bookmarks[sel + 1],
 			    sizeof(bookmarks[0]) * (size_t)(nbookmarks - sel -
 			    1));
