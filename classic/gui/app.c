@@ -303,6 +303,11 @@ close_front(void)
 static TEHandle about_license;
 static ControlHandle about_scroll;
 
+enum {
+	ABOUT_OK = 1, ABOUT_TITLE, ABOUT_DESC, ABOUT_LICENSING,
+	ABOUT_TEXT, ABOUT_SCROLL
+};
+
 static short
 about_line_height(void)
 {
@@ -409,7 +414,7 @@ about_filter(DialogPtr d, EventRecord *ev, short *item)
 		return false;
 	key = (char)(ev->message & charCodeMask);
 	if (key == '\r' || key == 0x03) {
-		*item = 1;
+		*item = ABOUT_OK;
 		return true;
 	}
 	if (ev->modifiers & cmdKey) {
@@ -430,65 +435,83 @@ about_filter(DialogPtr d, EventRecord *ev, short *item)
 	return false;
 }
 
-/* Get a STR resource as a C string in a temporary buffer. */
-static void
-get_string_resource(short id, char *out, size_t sz)
+static int
+about_set_string(DialogPtr d, short item, short id)
 {
-	Handle h = GetResource('STR ', id);
+	Handle text = GetResource('STR ', id), item_handle;
+	short type;
+	Rect r;
 
-	if (h != NULL && sz > 0) {
-		HLock(h);
-		size_t len = (unsigned char)(**h);
-		if (len > sz - 1)
-			len = sz - 1;
-		memcpy(out, (unsigned char *)*h + 1, len);
-		HUnlock(h);
-		ReleaseResource(h);
-		out[len] = '\0';
-	} else if (sz > 0) {
-		out[0] = '\0';
-	}
+	if (text == NULL)
+		return -1;
+	GetDialogItem(d, item, &type, &item_handle, &r);
+	HLock(text);
+	if (item == ABOUT_OK)
+		SetControlTitle((ControlHandle)item_handle, (StringPtr)*text);
+	else
+		SetDialogItemText(item_handle, (StringPtr)*text);
+	HUnlock(text);
+	ReleaseResource(text);
+	return 0;
+}
+
+static pascal void
+about_placeholder(DialogPtr d, short item)
+{
+	/* The user items supply bounds; about_draw paints their contents. */
+	(void)d;
+	(void)item;
+}
+
+static void
+about_item_rect(DialogPtr d, short item, Rect *r)
+{
+	Handle h;
+	short type;
+
+	GetDialogItem(d, item, &type, &h, r);
+	SetDialogItem(d, item, type, (Handle)about_placeholder, r);
 }
 
 static void
 about(void)
 {
-	Handle license = GetResource('TEXT', 128);
-	Handle items = ditl_new();
-	DialogPtr d;
-	short hit = 0, w = 470, h = 260;
+	Handle license = NULL;
+	DialogPtr d = GetNewDialog(128, NULL, (WindowPtr)-1);
+	short hit = 0;
 	Rect r;
 	long len;
-	char title[64], desc[256], licensing[256], ok[16];
 
-	get_string_resource(128, title, sizeof(title));
-	get_string_resource(129, desc, sizeof(desc));
-	get_string_resource(130, licensing, sizeof(licensing));
-	get_string_resource(131, ok, sizeof(ok));
+	if (d == NULL)
+		goto fail;
+	if (about_set_string(d, ABOUT_OK, 131) != 0 ||
+	    about_set_string(d, ABOUT_TITLE, 128) != 0 ||
+	    about_set_string(d, ABOUT_DESC, 129) != 0 ||
+	    about_set_string(d, ABOUT_LICENSING, 130) != 0)
+		goto fail;
+	license = GetResource('TEXT', 128);
+	if (license == NULL)
+		goto fail;
 
-	ditl_add(items, DI_BUTTON, h - 32, w - 86, h - 12, w - 14, ok);
-	ditl_add(items, DI_STATIC, 12, 14, 28, w - 14, title);
-	ditl_add(items, DI_STATIC, 32, 14, 64, w - 14, desc);
-	ditl_add(items, DI_STATIC, 68, 14, 116, w - 14, licensing);
-	r.left = (qd.screenBits.bounds.right - w) / 2;
-	r.top = qd.screenBits.bounds.top + 24;
-	r.right = r.left + w;
-	r.bottom = r.top + h;
-	d = NewDialog(NULL, &r, "\pAbout rsyncope", true, dBoxProc,
-	    (WindowPtr)-1, false, 0, items);
+	MoveWindow(d, (qd.screenBits.bounds.right -
+	    (d->portRect.right - d->portRect.left)) / 2,
+	    qd.screenBits.bounds.top + 24, false);
 	SetPort(d);
-	SetRect(&r, 16, 120, w - 32, h - 42);
+	about_item_rect(d, ABOUT_TEXT, &r);
 	about_license = TENew(&r, &r);
-	SetRect(&r, w - 31, 118, w - 15, h - 40);
+	if (about_license == NULL)
+		goto fail;
+	about_item_rect(d, ABOUT_SCROLL, &r);
 	about_scroll = NewControl(d, &r, "\p", true, 0, 0, 0,
 	    scrollBarProc, 0);
-	if (license != NULL) {
-		len = GetHandleSize(license);
-		HLock(license);
-		TESetText(*license, len, about_license);
-		HUnlock(license);
-		ReleaseResource(license);
-	}
+	if (about_scroll == NULL)
+		goto fail;
+	len = GetHandleSize(license);
+	HLock(license);
+	TESetText(*license, len, about_license);
+	HUnlock(license);
+	ReleaseResource(license);
+	license = NULL;
 	TECalText(about_license);
 	SetControlMaximum(about_scroll, (short)
 	    (((*about_license)->nLines >
@@ -498,15 +521,30 @@ about(void)
 	    ((*about_license)->viewRect.bottom -
 	    (*about_license)->viewRect.top) / about_line_height() : 0));
 	TEActivate(about_license);
-	SetDialogDefaultItem(d, 1);
+	SetDialogDefaultItem(d, ABOUT_OK);
+	ShowWindow(d);
 	about_draw(d);
-	while (hit != 1)
+	while (hit != ABOUT_OK)
 		ModalDialog((ModalFilterUPP)about_filter, &hit);
 	TEDispose(about_license);
 	DisposeControl(about_scroll);
 	about_license = NULL;
 	about_scroll = NULL;
 	DisposeDialog(d);
+	return;
+
+fail:
+	if (license != NULL)
+		ReleaseResource(license);
+	if (about_license != NULL)
+		TEDispose(about_license);
+	if (about_scroll != NULL)
+		DisposeControl(about_scroll);
+	about_license = NULL;
+	about_scroll = NULL;
+	if (d != NULL)
+		DisposeDialog(d);
+	app_note("Could not open the About dialog.");
 }
 
 static void

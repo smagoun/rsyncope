@@ -26,6 +26,28 @@ resource 'STR ' (131) {
 	"OK"
 };
 
+resource 'DLOG' (128) {
+	{ 0, 0, 260, 470 },
+	dBoxProc,
+	invisible,
+	noGoAway,
+	0,
+	128,
+	"About rsyncope",
+	noAutoCenter
+};
+
+resource 'DITL' (128) {
+	{
+		{ 228, 384, 248, 456 }, Button { enabled, "" };
+		{ 12, 14, 28, 456 }, StaticText { disabled, "" };
+		{ 32, 14, 64, 456 }, StaticText { disabled, "" };
+		{ 68, 14, 116, 456 }, StaticText { disabled, "" };
+		{ 120, 16, 218, 438 }, UserItem { disabled };
+		{ 118, 439, 220, 455 }, UserItem { disabled };
+	}
+};
+
 /* Memory for rsync: the file list and buffers need a few megabytes. */
 resource 'SIZE' (-1) {
 	reserved,
