@@ -1,6 +1,32 @@
-/* Memory for rsync: the file list and buffers need a few megabytes. */
 #include "Processes.r"
+#include "Menus.r"
+#include "Dialogs.r"
 
+/* Resource type definitions */
+type 'TEXT' {
+	string;
+};
+
+/* About dialog strings */
+resource 'STR ' (128) {
+	"rsyncope"
+};
+
+resource 'STR ' (129) {
+	"A Classic Mac OS GUI and port derived from Apple's fork of openrsync."
+};
+
+resource 'STR ' (130) {
+	"The Mac OS implementation is licensed under the MIT License. "
+	"Portions of the software (the openrsync core) are licensed under "
+	"the ISC License."
+};
+
+resource 'STR ' (131) {
+	"OK"
+};
+
+/* Memory for rsync: the file list and buffers need a few megabytes. */
 resource 'SIZE' (-1) {
 	reserved,
 	acceptSuspendResumeEvents,
@@ -22,23 +48,94 @@ resource 'SIZE' (-1) {
 	3 * 1024 * 1024
 };
 
-/* About dialog strings */
-resource 'STR ' (128) {
-	"rsyncope"
+/* Menu resources: enable flags disable separator item numbers. */
+resource 'MENU' (128) {
+	128,
+	textMenuProc,
+	0x7FFFFFFD,
+	enabled,
+	apple,
+	{
+		"About rsyncope\0xC9", noIcon, noKey, noMark, plain,
+		"-", noIcon, noKey, noMark, plain
+	}
 };
 
-resource 'STR ' (129) {
-	"A Classic Mac OS GUI and port derived from Apple's fork of openrsync."
+resource 'MENU' (129) {
+	129,
+	textMenuProc,
+	0x7FFFFFEB,
+	enabled,
+	"File",
+	{
+		"New Bookmark", noIcon, "N", noMark, plain,
+		"Open Bookmark", noIcon, "O", noMark, plain,
+		"-", noIcon, noKey, noMark, plain,
+		"Close", noIcon, "W", noMark, plain,
+		"-", noIcon, noKey, noMark, plain,
+		"Quit", noIcon, "Q", noMark, plain
+	}
 };
 
-resource 'STR ' (130) {
-	"The Mac OS implementation is licensed under the MIT License. "
-	"Portions of the software (the openrsync core) are licensed under "
-	"the ISC License."
+resource 'MENU' (130) {
+	130,
+	textMenuProc,
+	0x7FFFFFFD,
+	enabled,
+	"Edit",
+	{
+		"Undo", noIcon, "Z", noMark, plain,
+		"-", noIcon, noKey, noMark, plain,
+		"Cut", noIcon, "X", noMark, plain,
+		"Copy", noIcon, "C", noMark, plain,
+		"Paste", noIcon, "V", noMark, plain,
+		"Clear", noIcon, noKey, noMark, plain,
+		"Select All", noIcon, "A", noMark, plain
+	}
 };
 
-resource 'STR ' (131) {
-	"OK"
+resource 'MENU' (131) {
+	131,
+	textMenuProc,
+	0x7FFFFFF7,
+	enabled,
+	"Sync",
+	{
+		"Sync Now", noIcon, "R", noMark, plain,
+		"Preview", noIcon, "P", noMark, plain,
+		"Stop", noIcon, ".", noMark, plain,
+		"-", noIcon, noKey, noMark, plain,
+		"Copy Command to Console", noIcon, noKey, noMark, plain
+	}
+};
+
+resource 'MENU' (132) {
+	132,
+	textMenuProc,
+	allEnabled,
+	enabled,
+	"Server",
+	{
+		"Start Server", noIcon, noKey, noMark, plain,
+		"Start Server at Launch", noIcon, noKey, noMark, plain
+	}
+};
+
+resource 'MENU' (133) {
+	133,
+	textMenuProc,
+	allEnabled,
+	enabled,
+	"Window",
+	{
+		"Bookmarks", noIcon, "1", noMark, plain,
+		"Console", noIcon, "2", noMark, plain
+	}
+};
+
+/* Menu bar resource */
+resource 'MBAR' (128) {
+	{ 128, 129, 130, 131, 132, 133 }
 };
 
 /* License text for the About dialog */
