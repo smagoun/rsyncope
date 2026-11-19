@@ -1,4 +1,4 @@
-# rsync for Classic Mac OS (68k, Mac OS 8.1)
+# rsyncope Classic Mac OS (68k, Mac OS 8.1)
 
 This is a port of `openrsync/` (Apple's current rsync, protocol 29) to Classic Mac OS, built with [Retro68](https://github.com/autc04/Retro68). It pulls a tree from an rsync daemon and keeps resource forks and Finder info. The design and the reasons behind it are in [`docs/CLASSIC_MACOS_PORT.md`](../docs/CLASSIC_MACOS_PORT.md).
 
@@ -6,7 +6,7 @@ This is a port of `openrsync/` (Apple's current rsync, protocol 29) to Classic M
 
 There are two applications:
 
-* **rsync**, the windowed app (`classic/gui`):
+* **rsyncope**, the windowed app (`classic/gui`):
   * **rsync Bookmarks:** one window listing your saved syncs, like an FTP client's bookmarks. New… creates one. Double-clicking (or Edit…) opens it for review. Sync runs it, and Preview does a dry run.
   * **The editor window:** has every option, a Choose… folder button, the equivalent command line, and To Console, which copies that command to the console.
   * **rsync Console:** the command line, with history on the Up and Down arrows. `help` lists the built-ins: `bookmarks`, `sync NAME`, `preview NAME`, `server on|off`, `set`, `trace`, `memory`, `clear`, `quit`.

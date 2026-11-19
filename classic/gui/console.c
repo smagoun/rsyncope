@@ -350,7 +350,7 @@ console_builtin(const char *line)
 		    "  trace on|off         log file and network calls\r"
 		    "  memory               free memory and the low point since last time\r"
 		    "  clear                clear this window\r"
-		    "  quit                 quit rsync\r");
+		    "  quit                 quit rsyncope\r");
 		return 1;
 	}
 	return 0;

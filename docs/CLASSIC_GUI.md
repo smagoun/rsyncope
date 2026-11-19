@@ -165,7 +165,7 @@ Double-clicking a set in the Finder opens it and, if the *Sync when opened* chec
 
 | Menu | Items |
 |---|---|
-| Apple | About rsync… |
+| Apple | About rsyncope… |
 | File | New Sync Set ⌘N · Open… ⌘O · Close ⌘W · Save ⌘S · Save As… · Quit ⌘Q |
 | Edit | Undo ⌘Z · Cut ⌘X · Copy ⌘C · Paste ⌘V · Clear · Select All ⌘A · Preferences… |
 | Sync | Sync Now ⌘R · Preview ⌘P · Stop ⌘. · Show Command · Edit Types… |

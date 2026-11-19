@@ -239,7 +239,7 @@ static void
 make_menus(void)
 {
 	menus[0] = NewMenu(M_APPLE, "\p\x14");
-	AppendMenu(menus[0], "\pAbout rsync\xc9;(-");
+	AppendMenu(menus[0], "\pAbout rsyncope\xc9;(-");
 	AppendResMenu(menus[0], 'DRVR');
 	menus[1] = NewMenu(M_FILE, "\pFile");
 	AppendMenu(menus[1], "\pNew Bookmark/N;Open Bookmark/O;(-;Close/W;(-;"
@@ -436,7 +436,7 @@ about(void)
 {
 	static const char license[] =
 	    "MIT License\r\r"
-	    "Copyright (c) 2026 The rsync for Classic Mac OS contributors\r\r"
+	    "Copyright (c) 2026 The rsyncope contributors\r\r"
 	    "Permission is hereby granted, free of charge, to any person "
 	    "obtaining a copy of this software and associated documentation "
 	    "files (the \"Software\"), to deal in the Software without "
@@ -476,7 +476,7 @@ about(void)
 
 	ditl_add(items, DI_BUTTON, h - 32, w - 86, h - 12, w - 14, "OK");
 	ditl_add(items, DI_STATIC, 12, 14, 28, w - 14,
-	    "rsync for Classic Mac OS");
+	    "rsyncope");
 	ditl_add(items, DI_STATIC, 32, 14, 64, w - 14,
 	    "A Classic Mac OS GUI and port derived from Apple's fork of "
 	    "openrsync.");
@@ -488,7 +488,7 @@ about(void)
 	r.top = qd.screenBits.bounds.top + 24;
 	r.right = r.left + w;
 	r.bottom = r.top + h;
-	d = NewDialog(NULL, &r, "\pAbout rsync", true, dBoxProc,
+	d = NewDialog(NULL, &r, "\pAbout rsyncope", true, dBoxProc,
 	    (WindowPtr)-1, false, 0, items);
 	SetPort(d);
 	SetRect(&r, 16, 120, w - 32, h - 42);
