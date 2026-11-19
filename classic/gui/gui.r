@@ -48,6 +48,26 @@ resource 'DITL' (128) {
 	}
 };
 
+/* Generic confirmation or notification dialog. */
+resource 'DLOG' (129) {
+	{ 0, 0, 130, 340 },
+	dBoxProc,
+	invisible,
+	noGoAway,
+	0,
+	129,
+	"",
+	noAutoCenter
+};
+
+resource 'DITL' (129) {
+	{
+		{ 98, 254, 118, 326 }, Button { enabled, "" };
+		{ 98, 168, 118, 240 }, Button { enabled, "" };
+		{ 12, 14, 90, 326 }, StaticText { disabled, "" };
+	}
+};
+
 /* Memory for rsync: the file list and buffers need a few megabytes. */
 resource 'SIZE' (-1) {
 	reserved,

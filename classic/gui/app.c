@@ -776,27 +776,33 @@ ditl_add(Handle h, int type, short top, short left, short bottom,
 int
 app_ask(const char *msg, const char *ok, const char *cancel)
 {
-	Handle items = ditl_new();
-	DialogPtr d;
-	short hit = 0, w = 340, h = 130;
+	DialogPtr d = GetNewDialog(129, NULL, (WindowPtr)-1);
+	Handle item;
+	short hit = 0, type;
 	Rect r;
 	Str255 t;
 
-	ditl_add(items, DI_BUTTON, h - 32, w - 86, h - 12, w - 14, ok);
-	if (cancel != NULL)
-		ditl_add(items, DI_BUTTON, h - 32, w - 172, h - 12, w - 100,
-		    cancel);
-	ditl_add(items, DI_STATIC, 12, 14, h - 40, w - 14, msg);
-	r.left = (qd.screenBits.bounds.right - w) / 2;
-	r.top = 80;
-	r.right = r.left + w;
-	r.bottom = r.top + h;
-	d = NewDialog(NULL, &r, "\p", true, dBoxProc, (WindowPtr)-1, false, 0,
-	    items);
-	SetDialogDefaultItem(d, 1);
-	if (cancel != NULL)
+	if (d == NULL) {
+		fprintf(stderr, "rsyncope: could not open dialog: %s\n", msg);
+		return 0;
+	}
+	GetDialogItem(d, 1, &type, &item, &r);
+	c2p(ok, t);
+	SetControlTitle((ControlHandle)item, t);
+	GetDialogItem(d, 2, &type, &item, &r);
+	if (cancel != NULL) {
+		c2p(cancel, t);
+		SetControlTitle((ControlHandle)item, t);
 		SetDialogCancelItem(d, 2);
-	(void)t;
+	} else
+		HideDialogItem(d, 2);
+	GetDialogItem(d, 3, &type, &item, &r);
+	c2p(msg, t);
+	SetDialogItemText(item, t);
+	MoveWindow(d, (qd.screenBits.bounds.right -
+	    (d->portRect.right - d->portRect.left)) / 2, 80, false);
+	SetDialogDefaultItem(d, 1);
+	ShowWindow(d);
 	while (hit != 1 && hit != 2) {
 		ModalDialog(NULL, &hit);
 		if (cancel == NULL && hit != 1)
