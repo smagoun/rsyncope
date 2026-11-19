@@ -106,7 +106,7 @@ enum { DI_BUTTON = 4, DI_CHECK = 5, DI_RADIO = 6, DI_STATIC = 8 | 128,
 Handle	ditl_new(void);
 int	ditl_add(Handle, int type, short top, short left, short bottom,
 	    short right, const char *text);	/* returns the item number */
-/* Modal alert built from a DITL: returns the button pressed (1 = OK). */
+/* Modal alert: returns 1 for OK, 2 for Cancel, or 0 on error. */
 int	app_ask(const char *msg, const char *ok, const char *cancel);
 
 /* glue.c: scrap and dialog Edit-menu helpers (Inside Macintosh glue). */
