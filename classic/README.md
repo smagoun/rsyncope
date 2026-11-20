@@ -2,7 +2,7 @@
 
 rsyncope is a port of `openrsync/` (Apple's current rsync, protocol 29) to Classic Mac OS, built with [Retro68](https://github.com/autc04/Retro68). It pulls a tree from an rsync daemon and keeps resource forks and Finder info. The design and the reasons behind it are in [`docs/CLASSIC_MACOS_PORT.md`](../docs/CLASSIC_MACOS_PORT.md).
 
-## Using it
+## Overview
 
 There are two applications:
 
@@ -14,91 +14,22 @@ There are two applications:
   * **Storage:** bookmarks are kept in the text file `rsync Bookmarks` next to the app.
 * **rsync console**, the same engine with only a console window (`classic/rsync`). It's used for scripting and the emulator tests.
 
-  The app version appears in About, Finder's Get Info, the console banner, and
-  `rsync --version` (alongside the engine's protocol version).
-  Its menu bar has About and File > Quit (Cmd-Q).
+See [`USAGE.md`](USAGE.md) for command-line examples, daemon setup, resource-fork behavior, and netatalk setup.
 
-At the prompt in either app:
 
-```
-rsync -av --delete 192.168.1.10::src/MyApp/ "Macintosh HD:Projects:MyApp:"
-rsync -av --delete $(SRV)::src/MyApp/ :MyApp:
-```
+## Requirements
 
-* **Remote side:** an rsync daemon (`host::module/path` or `rsync://host/module/path`). The Mac has no ssh, so `host:path` doesn't work.
-* **Local side:** an HFS path (`Disk:Folder:`, or `:Folder:` relative to the app). A trailing colon means "the folder's contents", like a trailing `/` in rsync.
-* **`$(NAME)`:** taken from a text file `rsync prefs` next to the app, which holds lines like `SRV = 192.168.1.10`.
-* **Resource forks:** on by default (`--netatalk`), described below. Turn off with `--no-netatalk`.
-* **`--mac-types[=FILE]`:** files that arrive without a `._` sidecar get a type and creator chosen by name. The built-in table maps source/text files to `TEXT/ttxt` (SimpleText), `.rsrc` to `rsrc/RSED`, and so on. FILE adds or overrides entries, one per line: `.c TEXT KAHL` (THINK C), `Makefile TEXT MPS ` or `README TEXT R*ch`. A sidecar's own Finder info always wins.
-* **`--mac-text[=EXTS]`:** files with these extensions are stored with Mac (CR) line endings. The default list is `.c .h .cp .cpp .cc .hpp .r .p .pas .a .s .asm .txt .make .mk`; give your own as `--mac-text=.c,.h,.r`. LF and CR are swapped as bytes, so rsync still sees the server's exact contents: unchanged files are skipped, `--checksum` agrees, and changes go as deltas. A file with CRLF ends up with LF-CR on the Mac and round-trips exactly. Off by default.
-* **DST:** HFS dates are local time, so when daylight saving time starts or ends every local date shifts by an hour. A file whose size matches and whose date is off by exactly one hour (± `--modify-window`) is treated as unchanged. On by default in the Mac build; `--no-dst-window` turns it off. On Unix, `--dst-window` turns it on.
-* **Host names** are looked up through the `MacTCP DNR` resolver in the System Folder (TCP/IP control panel's name server).
-* **Built-in commands:**
-  * `trace on` / `trace off` logs every file and network call.
-  * `set NAME=VALUE` sets an environment variable. For example, `set RSYNC_GMT_OFFSET=-18000` pins the time zone (seconds east of UTC) for a Mac that never switches to daylight saving time.
-  * `memory` prints the partition size, free memory, the largest free block and the lowest free memory since the last `memory` (the peak a command needed).
-  * `quit` leaves the app.
+* A 68k Classic Mac running Mac OS 7.1 or 8.1
+* HFS storage and MacTCP DNR in the System Folder for host names
+* An rsync daemon for remote transfers; ssh and rsync-over-ssh are not supported
 
-### The Mac as a server (another computer pushes to it)
+Real hardware and performance have not yet been tested.
 
-Type `rsync --daemon` at the prompt. It serves the modules in a text file `rsyncd.conf` next to the app, one connection at a time, until Cmd-. stops it. Folder paths in the config use the POSIX form, `/Disk/Folder`:
+## Security
 
-```
-[incoming]
-    path = /Macintosh HD/Incoming
-    read only = no
-    use chroot = no
-```
+**Transfers are not secure.** The Classic Mac build supports only rsync-daemon connections, not ssh. The rsync daemon protocol sends file data and transfer metadata over the network without transport encryption. A daemon password may restrict access, but it does not protect the data while it is in transit.
 
-From the other computer:
-
-```bash
-rsync -av --delete dir/ rsync://192.168.1.20/incoming/dir/
-```
-
-* **Resource forks from a Mac running OS X** come across with its stock rsync's `-E` (`--extended-attributes`): `rsync -av -E dir/ rsync://classicmac/incoming/dir/`.
-  * The Mac daemon reads Apple's format and turns the `._name` entries into resource forks and Finder info.
-  * macOS's rsync reports those entries with the data fork's size, so forks are re-checked on every push. Delta transfer keeps that cheap.
-* **From Linux**, a netatalk tree's `._name` files are enough; no option is needed.
-* **Verified in QEMU:** pushes from rsync 3.2.7 and openrsync, `-E` pushes from the Linux build (which now also sends Apple's format), updates, `--delete` and a no-op run.
-
-### Mac to Mac, and sending from the Mac
-
-When the Mac sends (a push from the Mac, or anyone pulling from the Mac's server), each file with a resource fork or Finder info goes out as `name` plus a `._name` AppleDouble sidecar. So:
-* **Another Mac** running this port unpacks the sidecars into real forks.
-* **A Linux netatalk share** receives the sidecars, but a stock rsync daemon does not create Netatalk's separate metadata attribute. AFP may not expose the fork correctly even when the sidecar is intact. A push without `-E` that includes resource forks warns about this, including in previews and no-op runs; the app cannot determine whether a destination is a Netatalk share.
-* **With `-E`,** the Mac also adds Apple's marker byte to each entry, so macOS's `rsync -E` unpacks them itself.
-
-For an affected file on a Netatalk `ea = sys` volume, `nad set -l none filename` on the server creates metadata and made the fork readable in the observed case. This changes the file's color label and does **not** restore its original Finder info. It is not a general metadata-preservation solution. Verify the fork through AFP before relying on the copy, and keep the original.
-
-Tested in QEMU between the Mac OS 8.1 and System 7.1 VMs, in both directions (`classic/emu/try-mac2mac.sh`):
-* **What was copied:** pushes and pulls of a tree with resource forks, fork-only files, type/creator, MacRoman and 31-character names, and nested folders.
-* **Repeat runs** sent nothing.
-* **A changed fork** re-sent only that file.
-
-**System 7.1 stamps resource forks.** Whenever any program writes a resource fork through the File Manager, System 7.1 stores a record of its own in bytes 48–125 of the fork: the file's name, a date and the fork lengths.
-* That area is reserved for the system, so resource files work exactly as before.
-* A copy written on 7.1 differs from its source only in those bytes.
-* Mac OS 8.1 does the same, but rsync avoids it there by flushing each fork before closing it, so 8.1 copies are byte-for-byte identical.
-
-### Server setup (Linux + netatalk 4)
-
-Run a stock rsync daemon on the netatalk volume, with a module like this in `rsyncd.conf`:
-
-```
-[src]
-    path = /srv/afp/Projects
-    read only = yes
-    uid = <share owner>
-    gid = <share owner>
-```
-
-On the tested `ea = sys` volume, netatalk keeps resource forks in `._name` sidecars and Finder metadata in an extended attribute. Sidecars can also contain Finder info; a stock daemon transfers sidecars but not that attribute. The Mac side presents every local file's fork and Finder info as a virtual `._name`:
-* The quick check (size and mtime) works on forks, so unchanged forks are not re-sent.
-* Delta transfer works on forks.
-* Received sidecars are unpacked into the real resource fork and Finder info.
-* `--delete` and removed sidecars are handled.
-* The sidecar's mtime is kept in the file's HFS backup date, so a fork-only change on the server re-sends only the fork.
+Use rsync only over a trusted network or a separately secured tunnel/VPN. Prefer `read only = yes` for modules that do not need writes, restrict daemon access with a firewall or host allowlist, and do not transfer secrets over an untrusted network.
 
 ## Layout
 
@@ -107,8 +38,8 @@ On the tested `ea = sys` volume, netatalk keeps resource forks in `._name` sidec
 | `macposix/` | POSIX on the File Manager and MacTCP: paths, descriptors, directories, `rename` that keeps resource forks, sockets/`poll`, the `--netatalk` storage backend, C99 `printf`, stubs |
 | `gui/` | The windowed application: `app.c` (event loop, menus, run queue, server), `bookmarks.c`, `editor.c`, `console.c`, `glue.c` |
 | `rsync/` | The command engine shared by both apps (`engine.c`), the console app (`front.c`), 68k `config.h`, `SIZE` resource |
-| `../openrsync/netatalk.c` | `--netatalk` mode (the virtual `._name` layer), shared with the Unix build |
-| `../openrsync/hfsname.c` | UTF-8 to HFS names: MacRoman, 31-byte limit with hash-suffixed mangling, `:` to `/`, case collisions |
+| `openrsync/netatalk.c` | `--netatalk` mode (the virtual `._name` layer), shared with the Unix build |
+| `openrsync/hfsname.c` | UTF-8 to HFS names: MacRoman, 31-byte limit with hash-suffixed mangling, `:` to `/`, case collisions |
 | `mptest/`, `nettest/` | Self-tests that run inside Mac OS |
 | `tests/` | Host tests (`make -C classic/tests check`): `--netatalk` and `--mac-types`/`--mac-text`/`--dst-window` end to end against a stock rsync daemon, name rules, printf |
 | `emu/` | QEMU q800 scripts (`try-rsync.sh` for a client run, `try-daemon.sh` boots the Mac running the daemon and pushes to it through a forwarded port): boot unattended, run a test app or an rsync script, read the log back with `hfsutils`; `make-dist.sh` packages the app as a 1.44 MB disk image and MacBinary |
@@ -135,10 +66,6 @@ make -C build-classic        # build-classic/rsync/rsync.bin (MacBinary) and rsy
 make -C classic/tests check-version  # verify version resources in both apps
 ```
 
-The GUI build sets Finder's `hasBundle` flag in its MacBinary, disk image,
-AppleDouble and native application outputs so Finder can register its icon.
-This packaging step uses Python 3 and the Retro68 toolchain's hfsutils.
-
 Retro68 can be built with either header set. The port is developed with the default, the Multiversal Interfaces. Apple's Universal Interfaces are used instead when they're installed in Retro68's `InterfacesAndLibraries` while building it; `macposix/include/mactoolbox.h` picks the right headers for either. If a build with the Universal Interfaces trips on a missing name, rebuilding Retro68 with `--multiversal` is the known-good route.
 
 The Unix build of openrsync, which the host tests use, is `cd openrsync && ./configure && make`. Run it in a copy, because `configure` rewrites the checked-in `config.h`.
@@ -164,8 +91,12 @@ Working in QEMU q800 with Mac OS 8.1, against rsync 3.2.7:
 
 Also working, in QEMU and in the host tests: host names via MacTCP DNR, `--mac-types`, `--mac-text`, and DST tolerance (checked on the Mac by shifting the clock an hour with `set RSYNC_GMT_OFFSET`).
 
+Known issues:
+* **Pushing resource forks:** Pushing a file that contains a resource fork to a non-macOS host may fail to set the correct file attributes on that file, resulting in netatalk or other clients being unable to read the resource fork.
+
 Not done yet:
 
 * **Local copies** (two Mac paths, e.g. from a mounted AFP volume) need a thread-based server (plan §3.6).
-* **Real hardware.** Not yet run on a 68040 or against the owner's netatalk server, and speed has not been measured.
+* **ssh support** rsync-over-ssh is not supported for either the client or server.
+* **Real hardware.** Not yet run on a classic Mac, and speed has not been measured.
 * **Repeated commands.** Several commands in one session reset getopt, verbosity and filter rules. Other global state in openrsync may still carry over, so if a second command misbehaves, quit and relaunch.
