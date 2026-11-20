@@ -66,6 +66,7 @@ check "data fork of App is empty" '[ -f $DST/App ] && [ ! -s $DST/App ]'
 check "data mtime kept" '[ "$(date -r $DST/App +%F)" = 2024-01-02 ]'
 check "sidecar mtime kept separately" '[ "$(date -r $DST/.finf/App +%F)" = 2025-05-06 ]'
 check ".AppleDB excluded" '[ ! -e $DST/.AppleDB ]'
+check "pull does not warn about a remote destination" '! grep -q "resource forks are sent as AppleDouble sidecars" $W/out1'
 
 echo "# 2. second run is a no-op"
 sync_ -i > $W/out2 2>&1
@@ -127,6 +128,8 @@ check "orphan sidecar creates an empty file with the fork" \
     '[ -f $DST/Orphan ] && cmp -s $W/small.rsrc $DST/.rsrc/Orphan'
 
 echo "# 10. sending: forks go out as ._ sidecars"
+: > "$DST/Fork2"
+cp "$DST/.rsrc/Orphan" "$DST/.rsrc/Fork2"
 "$OPENRSYNC" -a --netatalk "$DST/" rsync://127.0.0.1:$PORT/up/ > $W/out10 2>&1 ||
     { cat $W/out10; fail "push exit status"; }
 # (By now App is deleted and main.c's fork cleared; Orphan has a fork.)
@@ -138,6 +141,26 @@ check "._Orphan carries the Finder info (TEXT/ttxt)" \
 check "backend folders not sent" '[ ! -e $W/up/.rsrc ] && [ ! -e $W/up/.finf ]'
 check "file without a fork has no sidecar" \
     '[ -f $W/up/src/main.c ] && [ ! -e $W/up/src/._main.c ]'
+check "multiple forks produce one destination warning" \
+    '[ "$(grep -c "resource forks are sent as AppleDouble sidecars" $W/out10)" -eq 1 ]'
+
+echo "# 11. preview and no-op pushes still warn"
+for opts in "-n" "-i"; do
+    "$OPENRSYNC" -a --netatalk $opts "$DST/" rsync://127.0.0.1:$PORT/up/ > $W/out11 2>&1 ||
+        { cat $W/out11; fail "push $opts exit status"; }
+    check "push $opts warns once" \
+        '[ "$(grep -c "resource forks are sent as AppleDouble sidecars" $W/out11)" -eq 1 ]'
+done
+check "no-op push transfers nothing" '! grep -q "^[<>]f" $W/out11'
+
+echo "# 12. Finder-info-only push does not warn about forks"
+mkdir -p "$W/plain/.finf"
+: > "$W/plain/Plain"
+cp "$DST/.finf/Orphan" "$W/plain/.finf/Plain"
+"$OPENRSYNC" -a --netatalk "$W/plain/" rsync://127.0.0.1:$PORT/up/ > $W/out12 2>&1 ||
+    { cat $W/out12; fail "Finder-info-only push exit status"; }
+check "Finder-info-only push has no fork warning" \
+    '! grep -q "resource forks are sent as AppleDouble sidecars" $W/out12'
 
 if [ $FAILS -ne 0 ]; then
 	echo "$FAILS test(s) failed; outputs in $W"
