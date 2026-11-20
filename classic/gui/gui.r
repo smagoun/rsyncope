@@ -3,6 +3,9 @@
 #include "Dialogs.r"
 #include "Finder.r"
 
+#define RSYNCOPE_VERSION_NAME "rsyncope"
+#include "../version.r"
+
 /* Resource type definitions */
 type 'TEXT' {
 	string;
@@ -199,7 +202,7 @@ data 'ics4' (128) {
 
 /* About dialog strings */
 resource 'STR ' (128) {
-	"rsyncope"
+	"rsyncope " RSYNCOPE_VERSION
 };
 
 resource 'STR ' (129) {

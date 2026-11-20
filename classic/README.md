@@ -1,6 +1,6 @@
 # rsyncope Classic Mac OS (68k, Mac OS 8.1)
 
-This is a port of `openrsync/` (Apple's current rsync, protocol 29) to Classic Mac OS, built with [Retro68](https://github.com/autc04/Retro68). It pulls a tree from an rsync daemon and keeps resource forks and Finder info. The design and the reasons behind it are in [`docs/CLASSIC_MACOS_PORT.md`](../docs/CLASSIC_MACOS_PORT.md).
+rsyncope is a port of `openrsync/` (Apple's current rsync, protocol 29) to Classic Mac OS, built with [Retro68](https://github.com/autc04/Retro68). It pulls a tree from an rsync daemon and keeps resource forks and Finder info. The design and the reasons behind it are in [`docs/CLASSIC_MACOS_PORT.md`](../docs/CLASSIC_MACOS_PORT.md).
 
 ## Using it
 
@@ -13,6 +13,9 @@ There are two applications:
   * **The server:** starts at launch when an `rsyncd.conf` is next to the app (Server > Start Server at Launch turns that off). A sync started from the GUI pauses the server between connections, and it resumes afterwards.
   * **Storage:** bookmarks are kept in the text file `rsync Bookmarks` next to the app.
 * **rsync console**, the same engine with only a console window (`classic/rsync`). It's used for scripting and the emulator tests.
+
+  The app version appears in About, Finder's Get Info, the console banner, and
+  `rsync --version` (alongside the engine's protocol version).
 
 At the prompt in either app:
 
@@ -126,6 +129,7 @@ mkdir Retro68-build && cd Retro68-build && ../Retro68/build-toolchain.bash --no-
 cmake -S classic -B build-classic \
   -DCMAKE_TOOLCHAIN_FILE=$PWD/Retro68-build/toolchain/m68k-apple-macos/cmake/retro68.toolchain.cmake
 make -C build-classic        # build-classic/rsync/rsync.bin (MacBinary) and rsync.dsk
+make -C classic/tests check-version  # verify version resources in both apps
 ```
 
 Retro68 can be built with either header set. The port is developed with the default, the Multiversal Interfaces. Apple's Universal Interfaces are used instead when they're installed in Retro68's `InterfacesAndLibraries` while building it; `macposix/include/mactoolbox.h` picks the right headers for either. If a build with the Universal Interfaces trips on a missing name, rebuilding Retro68 with `--multiversal` is the known-good route.

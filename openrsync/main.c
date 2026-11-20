@@ -45,6 +45,10 @@
 #include "extern.h"
 #include "zlib/zlib.h"
 
+#ifdef __MACOS_CLASSIC__
+#include "../classic/version.h"
+#endif
+
 #ifdef __APPLE__
 #include <os/variant_private.h>
 
@@ -1798,6 +1802,9 @@ basedir:
 			}
 			break;
 		case 'V':
+#ifdef __MACOS_CLASSIC__
+			printf("rsyncope " RSYNCOPE_VERSION "\n");
+#endif
 			printf("openrsync: protocol version %u\n",
 			    RSYNC_PROTOCOL);
 			printf("rsync version 2.6.9 compatible\n");
