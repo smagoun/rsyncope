@@ -5,6 +5,12 @@ add_application(rsyncope
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/gui.r.rsrc.bin
     APPEND DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../version.r
         ${CMAKE_CURRENT_SOURCE_DIR}/../version.h)
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/rsyncope.bin
+    APPEND
+    COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/set-bundle.py
+        ${CMAKE_CURRENT_BINARY_DIR}/rsyncope ${RETRO68_ROOT}/bin
+        ${CMAKE_HOST_SYSTEM_NAME}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/set-bundle.py)
 target_include_directories(rsyncope PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../rsync)
 target_link_libraries(rsyncope openrsync macposix)
