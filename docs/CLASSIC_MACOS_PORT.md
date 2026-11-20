@@ -1,6 +1,6 @@
 # Plan: rsync for Classic Mac OS 8.1 with resource-fork support
 
-Status: **plan, revision 6.** Phases 0–3 are done, and most of Phase 4 works in QEMU. See [`classic/README.md`](../classic/README.md) for what runs today and what's missing.
+Status: **plan, revision 6.** Phases 0–3 are done, and most of Phase 4 works in QEMU. See [`README.md`](../README.md) for what runs today and what's missing.
 
 ## 0. Decisions so far
 

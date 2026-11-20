@@ -1,5 +1,7 @@
 # Using rsyncope
 
+See the [project README](../README.md) for an overview, build instructions, and project status.
+
 At the prompt in either application:
 
 ```
@@ -54,7 +56,7 @@ When the Mac sends (a push from the Mac, or anyone pulling from the Mac's server
 
 For an affected file on a Netatalk `ea = sys` volume, `nad set -l none filename` on the server creates metadata and made the fork readable in the observed case. This changes the file's color label and does **not** restore its original Finder info. It is not a general metadata-preservation solution. Verify the fork through AFP before relying on the copy, and keep the original.
 
-Tested in QEMU between the Mac OS 8.1 and System 7.1 VMs, in both directions (`emu/try-mac2mac.sh`):
+Tested in QEMU between the Mac OS 8.1 and System 7.1 VMs, in both directions (`classic/emu/try-mac2mac.sh`):
 
 * **What was copied:** pushes and pulls of a tree with resource forks, fork-only files, type/creator, MacRoman and 31-character names, and nested folders.
 * **Repeat runs** sent nothing.

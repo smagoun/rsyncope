@@ -1,6 +1,6 @@
 # rsyncope
 
-rsyncope is a port of `openrsync/` (Apple's current rsync, protocol 29) to Classic Mac OS, built with [Retro68](https://github.com/autc04/Retro68). It pulls a tree from an rsync daemon and keeps resource forks and Finder info. The design and the reasons behind it are in [`docs/CLASSIC_MACOS_PORT.md`](../docs/CLASSIC_MACOS_PORT.md).
+rsyncope is a port of `openrsync/` (Apple's current rsync, protocol 29) to Classic Mac OS, built with [Retro68](https://github.com/autc04/Retro68). It pulls a tree from an rsync daemon and keeps resource forks and Finder info. The design and the reasons behind it are in [`docs/CLASSIC_MACOS_PORT.md`](docs/CLASSIC_MACOS_PORT.md).
 
 ## Overview
 
@@ -14,7 +14,7 @@ There are two applications:
   * **Storage:** bookmarks are kept in the text file `rsync Bookmarks` next to the app.
 * **rsync console**, the same engine with only a console window (`classic/rsync`). It's used for scripting and the emulator tests.
 
-See [`USAGE.md`](USAGE.md) for command-line examples, daemon setup, resource-fork behavior, and netatalk setup.
+See [`classic/USAGE.md`](classic/USAGE.md) for command-line examples, daemon setup, resource-fork behavior, and netatalk setup.
 
 
 ## Requirements
@@ -35,20 +35,20 @@ Use rsync only over a trusted network or a separately secured tunnel/VPN. Prefer
 
 | Path | What |
 |---|---|
-| `macposix/` | POSIX on the File Manager and MacTCP: paths, descriptors, directories, `rename` that keeps resource forks, sockets/`poll`, the `--netatalk` storage backend, C99 `printf`, stubs |
-| `gui/` | The windowed application: `app.c` (event loop, menus, run queue, server), `bookmarks.c`, `editor.c`, `console.c`, `glue.c` |
-| `rsync/` | The command engine shared by both apps (`engine.c`), the console app (`front.c`), 68k `config.h`, `SIZE` resource |
+| `classic/macposix/` | POSIX on the File Manager and MacTCP: paths, descriptors, directories, `rename` that keeps resource forks, sockets/`poll`, the `--netatalk` storage backend, C99 `printf`, stubs |
+| `classic/gui/` | The windowed application: `app.c` (event loop, menus, run queue, server), `bookmarks.c`, `editor.c`, `console.c`, `glue.c` |
+| `classic/rsync/` | The command engine shared by both apps (`engine.c`), the console app (`front.c`), 68k `config.h`, `SIZE` resource |
 | `openrsync/netatalk.c` | `--netatalk` mode (the virtual `._name` layer), shared with the Unix build |
 | `openrsync/hfsname.c` | UTF-8 to HFS names: MacRoman, 31-byte limit with hash-suffixed mangling, `:` to `/`, case collisions |
-| `mptest/`, `nettest/` | Self-tests that run inside Mac OS |
-| `tests/` | Host tests (`make -C classic/tests check`): `--netatalk` and `--mac-types`/`--mac-text`/`--dst-window` end to end against a stock rsync daemon, name rules, printf |
-| `emu/` | QEMU q800 scripts (`try-rsync.sh` for a client run, `try-daemon.sh` boots the Mac running the daemon and pushes to it through a forwarded port): boot unattended, run a test app or an rsync script, read the log back with `hfsutils`; `make-dist.sh` packages the app as a 1.44 MB disk image and MacBinary |
+| `classic/mptest/`, `classic/nettest/` | Self-tests that run inside Mac OS |
+| `classic/tests/` | Host tests (`make -C classic/tests check`): `--netatalk` and `--mac-types`/`--mac-text`/`--dst-window` end to end against a stock rsync daemon, name rules, printf |
+| `classic/emu/` | QEMU q800 scripts (`try-rsync.sh` for a client run, `try-daemon.sh` boots the Mac running the daemon and pushes to it through a forwarded port): boot unattended, run a test app or an rsync script, read the log back with `hfsutils`; `make-dist.sh` packages the app as a 1.44 MB disk image and MacBinary |
 
 The About dialog is shared by both apps: `about.c` implements it and
 `about.r` defines its resources; each app supplies its own name. The GUI's
 other menus, dialog layouts, initial window and control definitions, and
-static interface text are in `gui/gui.r`. Editor DITL item order must match
-the item enum in `gui/editor.c`; window resizing, list contents, TextEdit,
+static interface text are in `classic/gui/gui.r`. Editor DITL item order must match
+the item enum in `classic/gui/editor.c`; window resizing, list contents, TextEdit,
 and dynamic control state remain in code.
 
 ## Building
@@ -66,13 +66,13 @@ make -C build-classic        # build-classic/rsync/rsync.bin (MacBinary) and rsy
 make -C classic/tests check-version  # verify version resources in both apps
 ```
 
-Retro68 can be built with either header set. The port is developed with the default, the Multiversal Interfaces. Apple's Universal Interfaces are used instead when they're installed in Retro68's `InterfacesAndLibraries` while building it; `macposix/include/mactoolbox.h` picks the right headers for either. If a build with the Universal Interfaces trips on a missing name, rebuilding Retro68 with `--multiversal` is the known-good route.
+Retro68 can be built with either header set. The port is developed with the default, the Multiversal Interfaces. Apple's Universal Interfaces are used instead when they're installed in Retro68's `InterfacesAndLibraries` while building it; `classic/macposix/include/mactoolbox.h` picks the right headers for either. If a build with the Universal Interfaces trips on a missing name, rebuilding Retro68 with `--multiversal` is the known-good route.
 
 The Unix build of openrsync, which the host tests use, is `cd openrsync && ./configure && make`. Run it in a copy, because `configure` rewrites the checked-in `config.h`.
 
 ## Testing in QEMU
 
-See [`emu/README.md`](emu/README.md) for the VM. The ROM and disk images are not in the repo. Then:
+See [`classic/emu/README.md`](classic/emu/README.md) for the VM. The ROM and disk images are not in the repo. Then:
 
 ```bash
 classic/emu/try-rsync.sh "rsync -av --delete rsync://10.0.2.2:8873/src/ :dest:"
