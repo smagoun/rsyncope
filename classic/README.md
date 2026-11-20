@@ -60,10 +60,12 @@ rsync -av --delete dir/ rsync://192.168.1.20/incoming/dir/
 
 ### Mac to Mac, and sending from the Mac
 
-When the Mac sends (a push from the Mac, or anyone pulling from the Mac's server), each file with a resource fork or Finder info goes out as `name` plus a `._name` AppleDouble sidecar, the same format netatalk uses. So:
+When the Mac sends (a push from the Mac, or anyone pulling from the Mac's server), each file with a resource fork or Finder info goes out as `name` plus a `._name` AppleDouble sidecar. So:
 * **Another Mac** running this port unpacks the sidecars into real forks.
-* **A Linux netatalk share** gets them in the layout netatalk uses.
+* **A Linux netatalk share** receives the sidecars, but a stock rsync daemon does not create Netatalk's separate metadata attribute. AFP may not expose the fork correctly even when the sidecar is intact. A push without `-E` that includes resource forks warns about this, including in previews and no-op runs; the app cannot determine whether a destination is a Netatalk share.
 * **With `-E`,** the Mac also adds Apple's marker byte to each entry, so macOS's `rsync -E` unpacks them itself.
+
+For an affected file on a Netatalk `ea = sys` volume, `nad set -l none filename` on the server creates metadata and made the fork readable in the observed case. This changes the file's color label and does **not** restore its original Finder info. It is not a general metadata-preservation solution. Verify the fork through AFP before relying on the copy, and keep the original.
 
 Tested in QEMU between the Mac OS 8.1 and System 7.1 VMs, in both directions (`classic/emu/try-mac2mac.sh`):
 * **What was copied:** pushes and pulls of a tree with resource forks, fork-only files, type/creator, MacRoman and 31-character names, and nested folders.
@@ -87,7 +89,7 @@ Run a stock rsync daemon on the netatalk volume, with a module like this in `rsy
     gid = <share owner>
 ```
 
-netatalk keeps each file's resource fork and Finder info in a `._name` sidecar file, and the daemon sends those like any other file. The Mac side presents every local file's fork and Finder info as a virtual `._name` in the same format:
+On the tested `ea = sys` volume, netatalk keeps resource forks in `._name` sidecars and Finder metadata in an extended attribute. Sidecars can also contain Finder info; a stock daemon transfers sidecars but not that attribute. The Mac side presents every local file's fork and Finder info as a virtual `._name`:
 * The quick check (size and mtime) works on forks, so unchanged forks are not re-sent.
 * Delta transfer works on forks.
 * Received sidecars are unpacked into the real resource fork and Finder info.

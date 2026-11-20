@@ -140,6 +140,10 @@ rsync_client(struct cleanup_ctx *cleanup_ctx, const struct opts *opts,
 	memset(&sess, 0, sizeof(struct sess));
 	sess.opts = opts;
 	sess.mode = f->mode;
+#if HAVE_NETATALK
+	sess.warn_netatalk_push = f->host != NULL &&
+	    f->mode == FARGS_SENDER && !opts->extended_attributes;
+#endif
 	sess.lver = sess.protocol = sess.opts->protocol;
 	sess.wbatch_fd = -1;
 

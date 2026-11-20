@@ -754,6 +754,9 @@ struct	sess {
 	long		   total_deleted; /* Total files deleted */
 	bool		   err_del_limit; /* --max-delete limit exceeded */
 	bool		   lreceiver; /* Receiver is local */
+#if HAVE_NETATALK
+	bool		   warn_netatalk_push; /* Remote client push without -E */
+#endif
 	int		   protocol; /* negotiated protocol version */
 	char              *token_buf; /* used for protocol token processing */
 	size_t             token_bufsz; /* used for protocol token processing */

@@ -471,6 +471,7 @@ netatalk_flist_modify(const struct sess *sess, struct fl *fl)
 	char *ppath;
 	ptrdiff_t stripdir;
 	size_t i, insz = fl->sz;
+	int has_rsrc = 0;
 	int (*sent)(struct sess *, int, const struct flist *);
 
 	/*
@@ -486,6 +487,8 @@ netatalk_flist_modify(const struct sess *sess, struct fl *fl)
 			continue;
 		if (ntb_get(AT_FDCWD, f->path, &m) == -1 || !meta_present(&m))
 			continue;
+		if (m.rsrc_len > 0)
+			has_rsrc = 1;
 		base = basename_of(f->path);
 		stripdir = f->wpath - f->path;
 		if (asprintf(&ppath, "%.*s._%s", (int)(base - f->path),
@@ -508,6 +511,9 @@ netatalk_flist_modify(const struct sess *sess, struct fl *fl)
 		packed->sent = sent;
 		f->st.flags |= NT_HAS_SIDECAR;
 	}
+	if (has_rsrc && sess->warn_netatalk_push)
+		WARNX("resource forks are sent as AppleDouble sidecars; "
+		    "a Netatalk destination may need metadata repair for AFP");
 	return 1;
 }
 
