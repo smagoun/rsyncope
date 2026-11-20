@@ -27,10 +27,19 @@ set_source_files_properties(${O}/main.c PROPERTIES
     COMPILE_DEFINITIONS main=rsync_main)
 target_compile_options(openrsync PRIVATE -w)
 
-add_application(rsync front.c engine.c rsync.r CONSOLE CREATOR "rSnc")
+add_application(rsync front.c console_ui.cc ../about.c engine.c rsync.r
+    console_icons.r CONSOLE CREATOR "rSnc")
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/rsync.r.rsrc.bin
     APPEND DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../version.r
-        ${CMAKE_CURRENT_SOURCE_DIR}/../version.h)
+        ${CMAKE_CURRENT_SOURCE_DIR}/../version.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/../about.r)
+find_path(RETRO68_CONSOLE_INCLUDE_DIR retro/ConsoleWindow.h
+    HINTS "${RETRO68_ROOT}/../../Retro68/Console"
+        "${RETRO68_ROOT}/../Retro68/Console")
+if(NOT RETRO68_CONSOLE_INCLUDE_DIR)
+    message(FATAL_ERROR "Could not find Retro68's RetroConsole headers")
+endif()
+target_include_directories(rsync PRIVATE ${RETRO68_CONSOLE_INCLUDE_DIR})
 target_link_libraries(rsync openrsync macposix)
 target_link_options(rsync PRIVATE "-Wl,--wrap=_consolewrite"
     "-Wl,--wrap=abort" "-Wl,--wrap=_exit")

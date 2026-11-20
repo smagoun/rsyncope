@@ -40,7 +40,7 @@ def pstring(text):
     return bytes([len(value)]) + value
 
 
-def check_app(path, name, about, version, major, minor, bugfix):
+def check_app(path, name, about_name, version, major, minor, bugfix):
     found = resources(path)
     prefix = bytes([major // 10 * 16 + major % 10, minor * 16 + bugfix, 0x80, 0, 0, 0])
     prefix += pstring(version)
@@ -51,9 +51,75 @@ def check_app(path, name, about, version, major, minor, bugfix):
         )
         if found.get((b"vers", resource_id)) != prefix + pstring(long_text):
             raise ValueError(f"{path}: incorrect vers {resource_id}")
-    if about and found.get((b"STR ", 128)) != pstring(f"rsyncope {version}"):
+    if about_name and found.get((b"STR ", 128)) != pstring(f"{about_name} {version}"):
         raise ValueError(f"{path}: incorrect About title")
     print(f"ok - {name} version resources")
+
+
+def check_shared_about(gui, console):
+    gui_resources = resources(gui)
+    console_resources = resources(console)
+    for key in ((b"STR ", 129), (b"STR ", 130), (b"STR ", 131),
+                (b"DITL", 128), (b"TEXT", 128)):
+        if gui_resources.get(key) != console_resources.get(key):
+            raise ValueError(f"{gui} and {console}: About resources differ at {key}")
+
+    gui_dialog = gui_resources[(b"DLOG", 128)]
+    console_dialog = console_resources[(b"DLOG", 128)]
+    gui_title = pstring("About rsyncope")
+    console_title = pstring("About rsync console")
+    title_offset = gui_dialog.find(gui_title[1:])
+    if (title_offset < 1 or gui_dialog[title_offset - 1] != len(gui_title) - 1 or
+            console_dialog[title_offset - 1:title_offset + len(console_title) - 1] !=
+            console_title):
+        raise ValueError(f"{console}: incorrect About dialog name")
+    gui_end = title_offset - 1 + len(gui_title)
+    console_end = title_offset - 1 + len(console_title)
+    gui_end += gui_end % 2
+    console_end += console_end % 2
+    if (gui_dialog[:title_offset - 1] != console_dialog[:title_offset - 1] or
+            gui_dialog[gui_end:] != console_dialog[console_end:]):
+        raise ValueError(f"{gui} and {console}: About dialog layouts differ")
+    print("ok - shared About dialog resources")
+
+
+def bundle_mappings(found, path):
+    bundle = found.get((b"BNDL", 128))
+    if bundle is None:
+        raise ValueError(f"{path}: missing BNDL 128")
+    mappings = {}
+    offset = 8
+    while offset < len(bundle):
+        resource_type = bundle[offset:offset + 4]
+        count = u16(bundle, offset + 4) + 1
+        offset += 6
+        for _ in range(count):
+            local_id = u16(bundle, offset)
+            resource_id = u16(bundle, offset + 2)
+            mappings[(resource_type, local_id)] = resource_id
+            offset += 4
+    return mappings
+
+
+def check_finder_icons(gui, console):
+    gui_resources = resources(gui)
+    console_resources = resources(console)
+    icon_types = (b"ICN#", b"ics#", b"icl8", b"ics8", b"icl4", b"ics4")
+    for icon_type in icon_types:
+        if gui_resources.get((icon_type, 128)) is None:
+            raise ValueError(f"{gui}: missing existing {icon_type.decode()} 128")
+        if gui_resources.get((icon_type, 129)) is not None:
+            raise ValueError(f"{gui}: unexpected console {icon_type.decode()} 129")
+        if console_resources.get((icon_type, 129)) is None:
+            raise ValueError(f"{console}: missing {icon_type.decode()} 129")
+
+    gui_map = bundle_mappings(gui_resources, gui)
+    console_map = bundle_mappings(console_resources, console)
+    if gui_map.get((b"ICN#", 0)) != 128:
+        raise ValueError(f"{gui}: BNDL does not select icon 128")
+    if console_map.get((b"ICN#", 0)) != 129:
+        raise ValueError(f"{console}: BNDL does not select icon 129")
+    print("ok - Finder icons are assigned to the correct app")
 
 
 def check_bundle(path):
@@ -104,8 +170,11 @@ def main(gui, console, header):
     major, minor, bugfix = map(int, match.groups())
     if major > 99:
         raise ValueError("major version cannot be encoded in a vers resource")
-    check_app(gui, "rsyncope", True, version, major, minor, bugfix)
-    check_app(console, "rsync console", False, version, major, minor, bugfix)
+    check_app(gui, "rsyncope", "rsyncope", version, major, minor, bugfix)
+    check_app(console, "rsync console", "rsync console", version,
+        major, minor, bugfix)
+    check_shared_about(gui, console)
+    check_finder_icons(gui, console)
     check_bundle(gui)
 
 

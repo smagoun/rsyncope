@@ -16,11 +16,23 @@
 #include <unistd.h>
 
 #include "mactoolbox.h"
+#include "macposix.h"
 
+#include "../about.h"
 #include "engine.h"
 #include "../version.h"
 
 #define LINEMAX	2048
+
+enum { M_APPLE = 128, M_FILE };
+enum { A_ABOUT = 1, F_QUIT = 1 };
+
+static MenuHandle menus[2];
+static int quit_requested;
+
+int	console_ui_init(void);
+void	console_ui_event(EventRecord *);
+void	console_front_quit(void);
 
 /* ---- console tee to "rsync log" (linked with --wrap=_consolewrite) ---- */
 
@@ -115,6 +127,53 @@ banner(void)
 	printf("Type \"quit\" to leave.\n\n");
 }
 
+static int
+make_menus(void)
+{
+	Handle mbar = GetNewMBar(128);
+
+	if (mbar == NULL) {
+		fprintf(stderr, "rsync console: could not load menu bar resource 128\n");
+		return -1;
+	}
+	SetMenuBar(mbar);
+	menus[0] = GetMenuHandle(M_APPLE);
+	menus[1] = GetMenuHandle(M_FILE);
+	if (menus[0] == NULL || menus[1] == NULL) {
+		fprintf(stderr, "rsync console: could not load menu resources\n");
+		return -1;
+	}
+	AppendResMenu(menus[0], 'DRVR');
+	DrawMenuBar();
+	return 0;
+}
+
+void
+console_front_menu(long choice)
+{
+	short menu = HiWord(choice), item = LoWord(choice);
+
+	if (menu == M_APPLE && item == A_ABOUT) {
+		if (about_show() != 0)
+			fprintf(stderr, "rsync console: could not open About dialog\n");
+	} else if (menu == M_FILE && item == F_QUIT) {
+		console_front_quit();
+	}
+}
+
+void
+console_front_quit(void)
+{
+	quit_requested = 1;
+	mp_interrupted = 1;
+}
+
+int
+console_app_quitting(void)
+{
+	return quit_requested;
+}
+
 int
 main(void)
 {
@@ -124,6 +183,9 @@ main(void)
 	size_t len;
 	int rc;
 
+	if (console_ui_init() != 0 || make_menus() != 0)
+		return 1;
+	mp_event_hook = console_ui_event;
 	engine_grow_stack(256L * 1024);
 
 	if ((script = fopen("rsync script", "r")) != NULL) {
@@ -150,7 +212,7 @@ main(void)
 	}
 
 	banner();
-	for (;;) {
+	while (!quit_requested) {
 		printf("rsync> ");
 		fflush(stdout);
 		if (fgets(line, sizeof(line), stdin) == NULL)
