@@ -1,4 +1,4 @@
-# rsyncope Classic Mac OS (68k, Mac OS 8.1)
+# rsyncope
 
 rsyncope is a port of `openrsync/` (Apple's current rsync, protocol 29) to Classic Mac OS, built with [Retro68](https://github.com/autc04/Retro68). It pulls a tree from an rsync daemon and keeps resource forks and Finder info. The design and the reasons behind it are in [`docs/CLASSIC_MACOS_PORT.md`](../docs/CLASSIC_MACOS_PORT.md).
 
@@ -16,6 +16,7 @@ There are two applications:
 
   The app version appears in About, Finder's Get Info, the console banner, and
   `rsync --version` (alongside the engine's protocol version).
+  Its menu bar has About and File > Quit (Cmd-Q).
 
 At the prompt in either app:
 
@@ -112,7 +113,9 @@ On the tested `ea = sys` volume, netatalk keeps resource forks in `._name` sidec
 | `tests/` | Host tests (`make -C classic/tests check`): `--netatalk` and `--mac-types`/`--mac-text`/`--dst-window` end to end against a stock rsync daemon, name rules, printf |
 | `emu/` | QEMU q800 scripts (`try-rsync.sh` for a client run, `try-daemon.sh` boots the Mac running the daemon and pushes to it through a forwarded port): boot unattended, run a test app or an rsync script, read the log back with `hfsutils`; `make-dist.sh` packages the app as a 1.44 MB disk image and MacBinary |
 
-The GUI's menus, dialog layouts, initial window and control definitions, and
+The About dialog is shared by both apps: `about.c` implements it and
+`about.r` defines its resources; each app supplies its own name. The GUI's
+other menus, dialog layouts, initial window and control definitions, and
 static interface text are in `gui/gui.r`. Editor DITL item order must match
 the item enum in `gui/editor.c`; window resizing, list contents, TextEdit,
 and dynamic control state remain in code.
