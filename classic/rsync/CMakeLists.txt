@@ -28,6 +28,9 @@ set_source_files_properties(${O}/main.c PROPERTIES
 target_compile_options(openrsync PRIVATE -w)
 
 add_application(rsync front.c engine.c rsync.r CONSOLE CREATOR "rSnc")
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/rsync.r.rsrc.bin
+    APPEND DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../version.r
+        ${CMAKE_CURRENT_SOURCE_DIR}/../version.h)
 target_link_libraries(rsync openrsync macposix)
 target_link_options(rsync PRIVATE "-Wl,--wrap=_consolewrite"
     "-Wl,--wrap=abort" "-Wl,--wrap=_exit")

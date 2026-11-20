@@ -1,6 +1,7 @@
 # Host-side tests for the Classic Mac OS port.  Run: make -C classic/tests
 OPENRSYNC_DIR = ../../openrsync
 OPENRSYNC ?= $(OPENRSYNC_DIR)/openrsync
+CLASSIC_BUILD ?= ../../build-classic
 CFLAGS += -Wall -Wextra -I$(OPENRSYNC_DIR)
 
 all: check
@@ -17,7 +18,11 @@ check: hfsname_test printf_test
 	./netatalk_test.sh $(OPENRSYNC)
 	./macopts_test.sh $(OPENRSYNC)
 
+check-version:
+	perl ./version_test.pl $(CLASSIC_BUILD)/gui/rsyncope.bin \
+	    $(CLASSIC_BUILD)/rsync/rsync.bin ../version.h
+
 clean:
 	rm -f hfsname_test printf_test
 
-.PHONY: all check clean
+.PHONY: all check check-version clean

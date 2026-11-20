@@ -14,6 +14,7 @@
 
 #include "gui.h"
 #include "engine.h"
+#include "../version.h"
 
 #define OUT_MAX		24000	/* TextEdit holds 32K; keep the newest 24K */
 #define HIST_MAX	50
@@ -249,7 +250,7 @@ console_open(void)
 	focus = in;
 	layout();
 	TEActivate(in);
-	console_printf("rsync for Mac OS.  Type a command, e.g.\r"
+	console_printf("rsyncope " RSYNCOPE_VERSION ".  Type a command, e.g.\r"
 	    "  rsync -av server::module/dir/ \"Macintosh HD:Projects:\"\r"
 	    "Up and Down arrows recall earlier commands.  \"help\" lists "
 	    "the built-in ones.\r");

@@ -6,6 +6,9 @@
  */
 #include "Processes.r"
 
+#define RSYNCOPE_VERSION_NAME "rsync console"
+#include "../version.r"
+
 resource 'SIZE' (-1) {
 	reserved,
 	acceptSuspendResumeEvents,

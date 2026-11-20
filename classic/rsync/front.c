@@ -18,6 +18,7 @@
 #include "mactoolbox.h"
 
 #include "engine.h"
+#include "../version.h"
 
 #define LINEMAX	2048
 
@@ -105,7 +106,7 @@ read_line(FILE *f, char *buf, size_t len)
 static void
 banner(void)
 {
-	printf("rsync for Mac OS (openrsync, protocol 29)\n");
+	printf("rsync console " RSYNCOPE_VERSION " (openrsync, protocol 29)\n");
 	printf("Type a command, e.g.\n");
 	printf("  rsync -av --delete server::module/dir \"Macintosh HD:Projects:\"\n");
 	printf("HFS paths (Disk:Folder:) are fine.  $(NAME) comes from "
