@@ -19,7 +19,7 @@ check: hfsname_test printf_test
 	./macopts_test.sh $(OPENRSYNC)
 
 check-version:
-	perl ./version_test.pl $(CLASSIC_BUILD)/gui/rsyncope.bin \
+	python3 ./version_test.py $(CLASSIC_BUILD)/gui/rsyncope.bin \
 	    $(CLASSIC_BUILD)/rsync/rsync.bin ../version.h
 
 clean:
