@@ -31,11 +31,15 @@ resource 'FREF' (128, purgeable) {
 	'APPL', 0, ""
 };
 
+resource 'FREF' (129, purgeable) {
+	'rsBk', 1, ""
+};
+
 resource 'BNDL' (128, purgeable) {
 	'rSnc', 0,
 	{
-		'ICN#', { 0, 128 };
-		'FREF', { 0, 128 };
+		'ICN#', { 0, 128, 1, 130 };
+		'FREF', { 0, 128, 1, 129 };
 	}
 };
 
@@ -217,6 +221,7 @@ resource 'STR ' (144) { "There are too many bookmarks." };
 resource 'STR ' (145) { "Open the folder to sync, then click Save:" };
 resource 'STR ' (146) { "(this folder)" };
 resource 'STR ' (147) { "Could not save the bookmarks file \"rsync Bookmarks\"." };
+resource 'STR ' (148) { "Could not set Finder info for the bookmarks file." };
 /* Generic confirmation or notification dialog. */
 resource 'DLOG' (129) {
 	{ 0, 0, 130, 340 },

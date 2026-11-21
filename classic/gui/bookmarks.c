@@ -12,8 +12,8 @@
  *	module = src
  *	...
  *
- * It is plain MacRoman text with CR line ends, so it can be read and
- * edited in SimpleText.  Passwords are scrambled, not encrypted.
+ * It is plain MacRoman text with CR line ends (type rsBk, creator rSnc), so
+ * Finder opens it with rsyncope.  Passwords are scrambled, not encrypted.
  */
 #include <ctype.h>
 #include <stdio.h>
@@ -29,6 +29,34 @@
 struct bookmark	bookmarks[BM_MAX];
 int		nbookmarks;
 int		pref_start_server = 1;
+
+static int
+bm_set_finder_info(void)
+{
+	ProcessSerialNumber psn;
+	ProcessInfoRec info;
+	FSSpec app, spec;
+	FInfo fi;
+
+	memset(&info, 0, sizeof(info));
+	info.processInfoLength = sizeof(info);
+	info.processAppSpec = &app;
+	psn.highLongOfPSN = 0;
+	psn.lowLongOfPSN = kCurrentProcess;
+	if (GetProcessInformation(&psn, &info) != noErr ||
+	    FSMakeFSSpec(app.vRefNum, app.parID, "\prsync Bookmarks", &spec)
+	    != noErr || FSpGetFInfo(&spec, &fi) != noErr) {
+		gui_note(STR_BOOKMARK_INFO_FAILED);
+		return -1;
+	}
+	fi.fdType = 'rsBk';
+	fi.fdCreator = 'rSnc';
+	if (FSpSetFInfo(&spec, &fi) != noErr) {
+		gui_note(STR_BOOKMARK_INFO_FAILED);
+		return -1;
+	}
+	return 0;
+}
 
 /* ---- model ---------------------------------------------------------------- */
 
@@ -147,7 +175,7 @@ bm_load(void)
 	}
 	free(line);
 	fclose(f);
-	return 0;
+	return bm_set_finder_info();
 }
 
 int
@@ -180,7 +208,7 @@ bm_save(void)
 		    b->exclude, b->last);
 	}
 	fclose(f);
-	return 0;
+	return bm_set_finder_info();
 }
 
 /* ---- turning a bookmark into a command ------------------------------------ */

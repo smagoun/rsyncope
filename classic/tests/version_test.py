@@ -121,13 +121,25 @@ def check_finder_icons(gui, console):
             raise ValueError(f"{gui}: missing existing {icon_type.decode()} 128")
         if gui_resources.get((icon_type, 129)) is not None:
             raise ValueError(f"{gui}: unexpected console {icon_type.decode()} 129")
+        if gui_resources.get((icon_type, 130)) is None:
+            raise ValueError(f"{gui}: missing bookmarks {icon_type.decode()} 130")
         if console_resources.get((icon_type, 129)) is None:
             raise ValueError(f"{console}: missing {icon_type.decode()} 129")
+        if console_resources.get((icon_type, 130)) is not None:
+            raise ValueError(f"{console}: unexpected bookmarks {icon_type.decode()} 130")
 
     gui_map = bundle_mappings(gui_resources, gui)
     console_map = bundle_mappings(console_resources, console)
+    bookmark_fref = gui_resources.get((b"FREF", 129))
+    if (bookmark_fref is None or bookmark_fref[:4] != b"rsBk" or
+            u16(bookmark_fref, 4) != 1):
+        raise ValueError(f"{gui}: bookmarks FREF must be rsBk with local icon 1")
     if gui_map.get((b"ICN#", 0)) != 128:
         raise ValueError(f"{gui}: BNDL does not select icon 128")
+    if gui_map.get((b"ICN#", 1)) != 130:
+        raise ValueError(f"{gui}: BNDL does not select bookmarks icon 130")
+    if gui_map.get((b"FREF", 1)) != 129:
+        raise ValueError(f"{gui}: BNDL does not select bookmarks FREF 129")
     if console_map.get((b"ICN#", 0)) != 129:
         raise ValueError(f"{console}: BNDL does not select icon 129")
     print("ok - Finder icons are assigned to the correct app")

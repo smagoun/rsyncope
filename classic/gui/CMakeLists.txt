@@ -1,6 +1,7 @@
 # The rsync application with windows: bookmarks, editor, console, server.
 add_application(rsyncope
-    app.c bookmarks.c console.c editor.c glue.c ../about.c ../rsync/engine.c gui.r
+    app.c bookmarks.c console.c editor.c glue.c ../about.c ../rsync/engine.c
+    gui.r bookmarks_icon.r
     CREATOR "rSnc")
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/gui.r.rsrc.bin
     APPEND DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../version.r
