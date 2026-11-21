@@ -104,6 +104,17 @@ def bundle_mappings(found, path):
 def check_finder_icons(gui, console):
     gui_resources = resources(gui)
     console_resources = resources(console)
+    gui_creator = gui.read_bytes()[69:73]
+    console_creator = console.read_bytes()[69:73]
+    if gui_creator == console_creator:
+        raise ValueError(f"{gui} and {console}: application creator codes must differ")
+    for path, found, creator in (
+            (gui, gui_resources, gui_creator),
+            (console, console_resources, console_creator)):
+        bundle = found.get((b"BNDL", 128))
+        if bundle is None or bundle[:4] != creator:
+            raise ValueError(f"{path}: BNDL signature does not match application creator")
+
     icon_types = (b"ICN#", b"ics#", b"icl8", b"ics8", b"icl4", b"ics4")
     for icon_type in icon_types:
         if gui_resources.get((icon_type, 128)) is None:
@@ -176,6 +187,7 @@ def main(gui, console, header):
     check_shared_about(gui, console)
     check_finder_icons(gui, console)
     check_bundle(gui)
+    check_bundle(console)
 
 
 if __name__ == "__main__":

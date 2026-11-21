@@ -73,9 +73,9 @@ def set_bundle(base, tools, host):
         env = dict(os.environ, HOME=home)
         subprocess.run([str(tools / "hmount"), str(base) + ".dsk"], env=env, check=True)
         try:
-            subprocess.run([str(tools / "hdel"), ":rsyncope"], env=env, check=True)
+            subprocess.run([str(tools / "hdel"), ":" + base.name], env=env, check=True)
             subprocess.run(
-                [str(tools / "hcopy"), "-m", str(bin_path), ":rsyncope"],
+                [str(tools / "hcopy"), "-m", str(bin_path), ":" + base.name],
                 env=env,
                 check=True,
             )

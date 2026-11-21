@@ -22,7 +22,7 @@ resource 'FREF' (128, purgeable) {
 };
 
 resource 'BNDL' (128, purgeable) {
-	'rSnc', 0,
+	'rSnC', 0,
 	{
 		'ICN#', { 0, 129 };
 		'FREF', { 0, 128 };

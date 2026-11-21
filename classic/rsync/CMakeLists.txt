@@ -28,11 +28,17 @@ set_source_files_properties(${O}/main.c PROPERTIES
 target_compile_options(openrsync PRIVATE -w)
 
 add_application(rsync front.c console_ui.cc ../about.c engine.c rsync.r
-    console_icons.r CONSOLE CREATOR "rSnc")
+    console_icons.r CONSOLE CREATOR "rSnC")
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/rsync.r.rsrc.bin
     APPEND DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../version.r
         ${CMAKE_CURRENT_SOURCE_DIR}/../version.h
         ${CMAKE_CURRENT_SOURCE_DIR}/../about.r)
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/rsync.bin
+    APPEND
+    COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/../gui/set-bundle.py
+        ${CMAKE_CURRENT_BINARY_DIR}/rsync ${RETRO68_ROOT}/bin
+        ${CMAKE_HOST_SYSTEM_NAME}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../gui/set-bundle.py)
 find_path(RETRO68_CONSOLE_INCLUDE_DIR retro/ConsoleWindow.h
     HINTS "${RETRO68_ROOT}/../../Retro68/Console"
         "${RETRO68_ROOT}/../Retro68/Console")
