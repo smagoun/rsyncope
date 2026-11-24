@@ -14,8 +14,8 @@
 #define RSYNCOPE_ABOUT_NAME "rsync console"
 #include "../about.r"
 
-type 'rSnc' as 'STR ';
-resource 'rSnc' (0, purgeable) { "rsync console" };
+type 'rSnC' as 'STR ';
+resource 'rSnC' (0, purgeable) { "rsync console" };
 
 resource 'FREF' (128, purgeable) {
 	'APPL', 0, ""

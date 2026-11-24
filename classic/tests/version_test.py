@@ -114,6 +114,8 @@ def check_finder_icons(gui, console):
         bundle = found.get((b"BNDL", 128))
         if bundle is None or bundle[:4] != creator:
             raise ValueError(f"{path}: BNDL signature does not match application creator")
+        if (creator, 0) not in found:
+            raise ValueError(f"{path}: missing creator signature resource")
 
     icon_types = (b"ICN#", b"ics#", b"icl8", b"ics8", b"icl4", b"ics4")
     for icon_type in icon_types:
