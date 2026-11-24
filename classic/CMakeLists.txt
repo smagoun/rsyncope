@@ -35,3 +35,11 @@ add_subdirectory(nettest)
 add_subdirectory(mptest)
 add_subdirectory(rsync)
 add_subdirectory(gui)
+
+add_custom_target(dist
+    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/make-dist.sh"
+        "${CMAKE_CURRENT_BINARY_DIR}/dist"
+        "${CMAKE_CURRENT_BINARY_DIR}/gui/rsyncope.bin"
+        "${CMAKE_CURRENT_BINARY_DIR}/rsync/rsync.bin"
+    DEPENDS rsyncope_APPL rsync_APPL
+    VERBATIM)

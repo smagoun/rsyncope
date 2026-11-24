@@ -1,0 +1,70 @@
+# rsyncd.conf: copy next to the app and rename to "rsyncd.conf".
+# Everything below is commented out. Uncomment a module, its path and
+# the chroot setting, then adjust the other settings as needed.
+# Values are examples, not necessarily defaults.
+# Transfers are unencrypted. Use a trusted network or secured tunnel.
+#
+# Global options: place before the first module.
+# address = 192.168.1.20
+# port = 873
+# motd file = /Macintosh HD/rsync motd
+# socket options = SO_KEEPALIVE
+# Socket options have no effect on Classic Mac OS.
+#
+# Module options: uncomment [incoming] and the settings you need.
+# Paths use /Disk/Folder, not HFS colon notation.
+# [incoming]
+# path = /Macintosh HD/Incoming
+# comment = Files on this Mac
+# use chroot = no
+# read only = yes
+# write only = no
+# list = yes
+# timeout = 0
+# max verbosity = 1
+# refuse options = delete
+# ignore errors = no
+# ignore nonreadable = no
+#
+# Filters and files containing filter rules.
+# filter = - *.tmp
+# include = *.txt
+# include from = /Macintosh HD/rsync include
+# exclude = *.tmp
+# exclude from = /Macintosh HD/rsync exclude
+#
+# Host restrictions use numeric addresses; reverse DNS is unavailable.
+# hosts allow = 192.168.1.0/24
+# hosts deny = *
+#
+# Authentication is not encrypted. HFS does not enforce Unix file
+# permissions; strict modes must be disabled for an HFS secrets file.
+# Keep secrets on a trusted Mac; authentication has not been verified.
+# auth users = alice
+# secrets file = /Macintosh HD/rsync secrets
+# strict modes = no
+# The secrets file contains lines like alice:password.
+#
+# Logging. Syslog output goes to the console on Classic Mac OS.
+# log file = /Macintosh HD/rsyncd.log
+# log format = %o %h [%a] %m (%u) %f %l
+# transfer logging = no
+# syslog facility = daemon
+#
+# Classic Mac OS handles one connection at a time and cannot lock files.
+# PID files and positive max connections are unsupported.
+# max connections = 0
+#
+# The following are recognized but have limited or no effect on this Mac.
+# There are no Unix users, groups, permissions, symlinks, or chroot.
+# Setting use chroot = yes or an exec command will fail.
+# uid = nobody
+# gid = nobody
+# numeric ids = no
+# incoming chmod = u=rwX,g=rX,o=rX
+# outgoing chmod = u=rwX,g=rX,o=rX
+# munge symlinks = no
+# pre-xfer exec = command
+# post-xfer exec = command
+# dont compress is recognized but not honored by openrsync.
+# dont compress = *.gz *.zip

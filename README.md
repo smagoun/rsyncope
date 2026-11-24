@@ -42,7 +42,8 @@ Use rsync only over a trusted network or a separately secured tunnel/VPN. Prefer
 | `openrsync/hfsname.c` | UTF-8 to HFS names: MacRoman, 31-byte limit with hash-suffixed mangling, `:` to `/`, case collisions |
 | `classic/mptest/`, `classic/nettest/` | Self-tests that run inside Mac OS |
 | `classic/tests/` | Host tests (`make -C classic/tests check`): `--netatalk` and `--mac-types`/`--mac-text`/`--dst-window` end to end against a stock rsync daemon, name rules, printf |
-| `classic/emu/` | QEMU q800 scripts (`try-rsync.sh` for a client run, `try-daemon.sh` boots the Mac running the daemon and pushes to it through a forwarded port): boot unattended, run a test app or an rsync script, read the log back with `hfsutils`; `make-dist.sh` packages the app as a 1.44 MB disk image and MacBinary |
+| `classic/emu/` | QEMU q800 scripts (`try-rsync.sh` for a client run, `try-daemon.sh` boots the Mac running the daemon and pushes to it through a forwarded port): boot unattended, run a test app or an rsync script, read the log back with `hfsutils` |
+| `classic/make-dist.sh` | Packages both apps as disk images and MacBinary |
 
 The About dialog is shared by both apps: `about.c` implements it and
 `about.r` defines its resources; each app supplies its own name. The GUI's
@@ -65,6 +66,21 @@ cmake -S classic -B build-classic \
 make -C build-classic        # build-classic/rsync/rsync.bin (MacBinary) and rsync.dsk
 make -C classic/tests check-version  # verify version resources in both apps
 ```
+
+For distribution, run `make -C build-classic dist`. This builds both apps and
+places `rsyncope.img`, `rsyncope.dsk`, `rsyncope.bin`, and `rsync-console.bi  n`
+in `build-classic/dist/`, ready to upload to a GitHub release. It requires
+`hfsutils`. Both disk images contain the apps, Read Me, and sample configs.
+They are identical 4 MiB unpartitioned HFS volumes, not floppy-sized images;
+attaching them as QEMU SCSI disks may not mount them in Classic Mac OS.
+Unmount any previous images before rebuilding. The target replaces its output
+files and removes the obsolete `rsync-console.dsk` from earlier releases.
+Alternatively, `classic/make-dist.sh <out-dir>` packages existing builds
+and accepts optional paths to the GUI and console MacBinary files. The disk
+Read Me is maintained in `classic/readme.txt`; the samples are maintained
+in `classic/rsync-prefs.sample` and
+`classic/rsyncd.conf.sample`. Run
+`make -C classic/tests check-dist` to verify packaging with a fresh build.
 
 Retro68 can be built with either header set. The port is developed with the default, the Multiversal Interfaces. Apple's Universal Interfaces are used instead when they're installed in Retro68's `InterfacesAndLibraries` while building it; `classic/macposix/include/mactoolbox.h` picks the right headers for either. If a build with the Universal Interfaces trips on a missing name, rebuilding Retro68 with `--multiversal` is the known-good route.
 

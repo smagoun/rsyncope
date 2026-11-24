@@ -12,6 +12,7 @@ rsync -av --delete $(SRV)::src/MyApp/ :MyApp:
 * **Remote side:** an rsync daemon (`host::module/path` or `rsync://host/module/path`). The Mac has no ssh, so `host:path` doesn't work.
 * **Local side:** an HFS path (`Disk:Folder:`, or `:Folder:` relative to the app). A trailing colon means "the folder's contents", like a trailing `/` in rsync.
 * **`$(NAME)`:** taken from a text file `rsync prefs` next to the app, which holds lines like `SRV = 192.168.1.10`.
+  Names are user-defined substitutions, not predefined settings or environment variables.
 * **Resource forks:** on by default (`--netatalk`), described below. Turn off with `--no-netatalk`.
 * **`--mac-types[=FILE]`:** files that arrive without a `._` sidecar get a type and creator chosen by name. The built-in table maps source/text files to `TEXT/ttxt` (SimpleText), `.rsrc` to `rsrc/RSED`, and so on. FILE adds or overrides entries, one per line: `.c TEXT KAHL` (THINK C), `Makefile TEXT MPS ` or `README TEXT R*ch`. A sidecar's own Finder info always wins.
 * **`--mac-text[=EXTS]`:** files with these extensions are stored with Mac (CR) line endings. The default list is `.c .h .cp .cpp .cc .hpp .r .p .pas .a .s .asm .txt .make .mk`; give your own as `--mac-text=.c,.h,.r`. LF and CR are swapped as bytes, so rsync still sees the server's exact contents: unchanged files are skipped, `--checksum` agrees, and changes go as deltas. A file with CRLF ends up with LF-CR on the Mac and round-trips exactly. Off by default.
@@ -26,6 +27,10 @@ rsync -av --delete $(SRV)::src/MyApp/ :MyApp:
 ## The Mac as a server (another computer pushes to it)
 
 Type `rsync --daemon` at the prompt. It serves the modules in a text file `rsyncd.conf` next to the app, one connection at a time, until Cmd-. stops it. Folder paths in the config use the POSIX form, `/Disk/Folder`:
+
+The distribution image includes commented samples of `rsync prefs` and
+`rsyncd.conf`. The daemon sample provides option examples and notes Classic
+Mac OS limitations. Rename and edit it before use.
 
 ```
 [incoming]

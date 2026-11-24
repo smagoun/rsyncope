@@ -1,0 +1,12 @@
+# rsync prefs: copy next to the app and rename to "rsync prefs".
+# Uncomment and edit examples, or define any names you choose.
+# There are no predefined options: each NAME = value supplies $(NAME)
+# in a command. Names are case-sensitive.
+# SRV = 192.168.1.10
+# MODULE = src
+# SOURCE = rsync://192.168.1.10/src/
+# DEST = :MyApp:
+#
+# Example command: rsync -av $(SOURCE) $(DEST)
+# These are substitutions, not environment variables. Use the console
+# command "set NAME=VALUE" to set an environment variable instead.

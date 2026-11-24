@@ -22,7 +22,10 @@ check-version:
 	python3 ./version_test.py $(CLASSIC_BUILD)/gui/rsyncope.bin \
 	    $(CLASSIC_BUILD)/rsync/rsync.bin ../version.h
 
+check-dist:
+	sh ./dist_test.sh "$(CLASSIC_BUILD)"
+
 clean:
 	rm -f hfsname_test printf_test
 
-.PHONY: all check check-version clean
+.PHONY: all check check-version check-dist clean
