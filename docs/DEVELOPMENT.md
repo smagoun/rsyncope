@@ -58,9 +58,10 @@ in `build-classic/dist/`, ready to upload to a GitHub release. It requires
 
 To create a GitHub draft release, run `make -C build-classic draft-release`.
 The target rebuilds the distribution and uploads every file in `dist/`, plus
-the project README, usage guide, and license. It requires the
-authenticated GitHub CLI, a clean tracked worktree with no untracked source or
-documentation files, and the current commit available on GitHub. It uses
+the license. To include a source tarball, place it in `dist/` yourself.
+It requires the authenticated GitHub CLI, a clean tracked worktree with no
+untracked source or documentation files, and the current commit available on
+GitHub. It uses
 `v` plus the version in `classic/version.h` as the tag. If that tag already
 exists on GitHub, fetch it locally and ensure it points to the current commit.
 Review the draft and its assets before publishing; the target does not publish

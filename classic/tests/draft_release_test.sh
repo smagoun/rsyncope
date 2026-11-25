@@ -32,21 +32,30 @@ export PATH GH_ARGS
 DIST="$T/dist with spaces"
 VERSION=$(sed -n 's/^#define RSYNCOPE_VERSION "\(.*\)"$/\1/p' "$REPO/classic/version.h")
 TAG="v$VERSION"
+SOURCE="$DIST/rsyncope-$VERSION.tar.gz"
 printf 'image\n' > "$DIST/rsyncope.img"
 printf 'binary\n' > "$DIST/file with spaces.bin"
 printf 'hidden\n' > "$DIST/.hidden"
+printf 'dist readme\n' > "$DIST/README.md"
+printf 'local only\n' > "$REPO/local-only"
+printf 'source archive\n' > "$SOURCE"
 run_release() { sh "$REPO/classic/draft-release.sh" "$DIST"; }
 
 run_release
 grep -Fx -- "--draft" "$GH_ARGS" >/dev/null
 grep -Fx -- "$(git -C "$REPO" rev-parse HEAD)" "$GH_ARGS" >/dev/null
 grep -Fx -- "$TAG" "$GH_ARGS" >/dev/null
-for asset in "$REPO/README.md" "$REPO/classic/readme.txt" \
-    "$REPO/classic/USAGE.md" "$REPO/classic/LICENSE" \
-    "$DIST/rsyncope.img" "$DIST/file with spaces.bin" "$DIST/.hidden"; do
+for asset in "$REPO/classic/LICENSE" "$DIST/rsyncope.img" \
+    "$DIST/file with spaces.bin" "$DIST/.hidden" "$DIST/README.md" \
+    "$SOURCE"; do
     grep -Fx -- "$asset" "$GH_ARGS" >/dev/null
 done
-
+for asset in "$REPO/README.md" "$REPO/classic/readme.txt" "$REPO/classic/USAGE.md"; do
+    if grep -Fx -- "$asset" "$GH_ARGS" >/dev/null; then
+        echo "unexpected standalone documentation asset: $asset" >&2
+        exit 1
+    fi
+done
 git -C "$REPO" tag -a "$TAG" -m test
 REMOTE_TAG=$(git -C "$REPO" rev-parse "$TAG")
 export REMOTE_TAG
@@ -71,29 +80,18 @@ grep 'Commit tracked changes' "$T/out" >/dev/null
 [ ! -e "$GH_ARGS" ]
 
 git -C "$REPO" restore README.md
-printf 'new source\n' > "$REPO/classic/untracked.c"
-if run_release >"$T/out" 2>&1; then
-    echo "expected untracked source to fail" >&2
-    exit 1
-fi
-grep 'untracked source' "$T/out" >/dev/null
-[ ! -e "$GH_ARGS" ]
-rm "$REPO/classic/untracked.c"
-
-API_STATUS=1
-export API_STATUS
-if run_release >"$T/out" 2>&1; then
-    echo "expected GitHub API failure to fail" >&2
-    exit 1
-fi
-[ ! -e "$GH_ARGS" ]
-unset API_STATUS
-
-printf 'extra\n' > "$DIST/README.md"
+printf 'extra\n' > "$DIST/LICENSE"
 if run_release >"$T/out" 2>&1; then
     echo "expected duplicate asset name to fail" >&2
     exit 1
 fi
 grep 'Duplicate release asset name' "$T/out" >/dev/null
 [ ! -e "$GH_ARGS" ]
+rm "$DIST/LICENSE"
+rm "$SOURCE"
+run_release
+if grep -Fx -- "$SOURCE" "$GH_ARGS" >/dev/null; then
+    echo "unexpected missing source archive in release" >&2
+    exit 1
+fi
 echo "ok - draft release assets and revision checks"

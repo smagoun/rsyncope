@@ -38,13 +38,11 @@ if [ -n "$REMOTE_TAG" ]; then
     fi
 fi
 
-set -- "$ROOT/README.md" "$S/readme.txt" "$S/USAGE.md" "$S/LICENSE"
-for file do
-    if [ ! -f "$file" ] || [ ! -r "$file" ]; then
-        echo "Cannot read release documentation: $file" >&2
-        exit 1
-    fi
-done
+if [ ! -f "$S/LICENSE" ] || [ ! -r "$S/LICENSE" ]; then
+    echo "Cannot read release license: $S/LICENSE" >&2
+    exit 1
+fi
+set -- "$S/LICENSE"
 for file in "$DIST"/* "$DIST"/.[!.]* "$DIST"/..?*; do
     [ -e "$file" ] || [ -L "$file" ] || continue
     if [ ! -f "$file" ] || [ ! -r "$file" ]; then
@@ -60,7 +58,7 @@ for file in "$DIST"/* "$DIST"/.[!.]* "$DIST"/..?*; do
     done
     set -- "$@" "$file"
 done
-if [ "$#" -eq 4 ]; then
+if [ "$#" -eq 1 ]; then
     echo "No distribution assets found in $DIST" >&2
     exit 1
 fi
