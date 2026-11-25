@@ -25,7 +25,10 @@ check-version:
 check-dist:
 	sh ./dist_test.sh "$(CLASSIC_BUILD)"
 
+check-release:
+	sh ./draft_release_test.sh
+
 clean:
 	rm -f hfsname_test printf_test
 
-.PHONY: all check check-version check-dist clean
+.PHONY: all check check-version check-dist check-release clean

@@ -43,3 +43,10 @@ add_custom_target(dist
         "${CMAKE_CURRENT_BINARY_DIR}/rsync/rsync.bin"
     DEPENDS rsyncope_APPL rsync_APPL
     VERBATIM)
+
+add_custom_target(draft-release
+    COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/draft-release.sh"
+        "${CMAKE_CURRENT_BINARY_DIR}/dist"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.."
+    DEPENDS dist
+    VERBATIM)

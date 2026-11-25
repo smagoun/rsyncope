@@ -34,10 +34,6 @@ make -C build-classic        # build-classic/rsync/rsync.bin (MacBinary) and rsy
 make -C classic/tests check-version  # verify version resources in both apps
 ```
 
-For distribution, run `make -C build-classic dist`. This builds both apps and
-places `rsyncope.img`, `rsyncope.dsk`, `rsyncope.bin`, and `rsync-console.bin`
-in `build-classic/dist/`, ready to upload to a GitHub release. It requires
-`hfsutils`. Run `make -C classic/tests check-dist` to verify packaging with a fresh build.
 
 Retro68 can be built with either header set. The port is developed with the default, the Multiversal Interfaces. Apple's Universal Interfaces are used instead when they're installed in Retro68's `InterfacesAndLibraries` while building it; `classic/macposix/include/mactoolbox.h` picks the right headers for either. If a build with the Universal Interfaces trips on a missing name, rebuilding Retro68 with `--multiversal` is the known-good route.
 
@@ -52,3 +48,21 @@ classic/emu/try-rsync.sh "rsync -av --delete rsync://10.0.2.2:8873/src/ :dest:"
 ```
 
 This installs the built app in Startup Items, runs the command at boot, powers the Mac off, and prints `rsync log`. From QEMU's network, the host is 10.0.2.2.
+
+## Releases
+
+For distribution, run `make -C build-classic dist`. This builds both apps and
+places `rsyncope.img`, `rsyncope.dsk`, `rsyncope.bin`, and `rsync-console.bin`
+in `build-classic/dist/`, ready to upload to a GitHub release. It requires
+`hfsutils`. Run `make -C classic/tests check-dist` to verify packaging with a fresh build.
+
+To create a GitHub draft release, run `make -C build-classic draft-release`.
+The target rebuilds the distribution and uploads every file in `dist/`, plus
+the project README, usage guide, and license. It requires the
+authenticated GitHub CLI, a clean tracked worktree with no untracked source or
+documentation files, and the current commit available on GitHub. It uses
+`v` plus the version in `classic/version.h` as the tag. If that tag already
+exists on GitHub, fetch it locally and ensure it points to the current commit.
+Review the draft and its assets before publishing; the target does not publish
+the release. Run `make -C classic/tests check-release` to test the release
+command without contacting GitHub.
