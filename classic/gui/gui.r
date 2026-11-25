@@ -244,7 +244,7 @@ resource 'DITL' (129) {
 
 /* Bookmark editor. Item order matches editor.c. */
 resource 'DLOG' (130) {
-	{ 44, 60, 494, 540 },
+	{ 44, 60, 466, 540 },
 	noGrowDocProc,
 	invisible,
 	goAway,
@@ -256,10 +256,10 @@ resource 'DLOG' (130) {
 
 resource 'DITL' (130) {
 	{
-		{ 418, 396, 438, 466 }, Button { enabled, "Save" };
-		{ 418, 316, 438, 386 }, Button { enabled, "Cancel" };
-		{ 418, 96, 438, 166 }, Button { enabled, "Sync" };
-		{ 418, 14, 438, 86 }, Button { enabled, "Preview" };
+		{ 390, 396, 410, 466 }, Button { enabled, "Save" };
+		{ 390, 316, 410, 386 }, Button { enabled, "Cancel" };
+		{ 390, 96, 410, 166 }, Button { enabled, "Sync" };
+		{ 390, 14, 410, 86 }, Button { enabled, "Preview" };
 		{ 12, 14, 28, 104 }, StaticText { disabled, "Name:" };
 		{ 12, 110, 28, 466 }, EditText { enabled, "" };
 		{ 38, 110, 56, 260 }, RadioButton { enabled, "Pull from server" };
@@ -301,12 +301,12 @@ resource 'DITL' (130) {
 };
 
 resource 'WIND' (128) {
-	{ 42, 10, 312, 530 }, documentProc, visible, goAway, 0,
+	{ 42, 10, 240, 530 }, documentProc, visible, goAway, 0,
 	"rsync Bookmarks", noAutoCenter
 };
 
 resource 'WIND' (129) {
-	{ 340, 10, 590, 630 }, documentProc, visible, goAway, 1,
+	{ 270, 10, 470, 630 }, documentProc, visible, goAway, 1,
 	"rsync Console", noAutoCenter
 };
 

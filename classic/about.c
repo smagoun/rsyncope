@@ -197,7 +197,7 @@ about_show(void)
 
 	MoveWindow(d, (qd.screenBits.bounds.right -
 	    (d->portRect.right - d->portRect.left)) / 2,
-	    qd.screenBits.bounds.top + 24, false);
+	    qd.screenBits.bounds.top + 50, false);
 	SetPort(d);
 	about_item_rect(d, ABOUT_TEXT, &r);
 	about_license = TENew(&r, &r);
