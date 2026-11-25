@@ -37,7 +37,7 @@ A *sync set* is a small document (type `RSet`, creator `rSnc`) holding:
 | Direction | Pull from server / Push to server | argument order |
 | Server | `buildbox.local`, port 873 | `rsync://host:port/` |
 | Module and path | `src` / `MyApp/` | `module/path` |
-| User and password | `steve`, stored scrambled in the set, or asked each time | `RSYNC_PASSWORD` |
+| User and password | `username`, stored scrambled in the set, or asked each time | `RSYNC_PASSWORD` |
 | Local folder | `Macintosh HD:Projects:MyApp:` (alias record, so a moved folder is still found) | local path |
 | Options | delete extras, forks via netatalk, Apple `-E`, type/creator mapping, Mac line endings, DST tolerance, compress, checksum, whole files, excludes | `--delete`, `--netatalk`, `--extended-attributes`, `--mac-types`, `--mac-text`, `--no-dst-window`, `-z`, `-c`, `-W`, `--exclude` |
 
@@ -70,7 +70,7 @@ Double-clicking a set in the Finder opens it and, if the *Sync when opened* chec
 │ Server:  [buildbox.local      ]  Port: [873 ]      │
 │ Module:  [src            ▾] [Get List]             │
 │ Path:    [MyApp/              ]                    │
-│ User:    [steve   ]  Password: [••••••]  [ ] Ask   │
+│ User:    [username]  Password: [••••••]  [ ] Ask   │
 │                                                    │
 │ Local folder:  ┌──────────────────────────┐        │
 │                │ 📁 Macintosh HD:Projects: │ [Choose…]

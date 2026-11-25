@@ -4,7 +4,18 @@ rsyncope is a port of `openrsync/` (Apple's current rsync, protocol 29) to Class
 
 ## Overview
 
-There are two applications:
+rsyncope was built to streamline a development workflow for building macOS applications:
+1. Edit files in a modern editor such as VSCode
+2. Copy (rsync) the files to a classic macOS environment like a VM to be compiled with a native
+compiler like THINK C
+
+With the `rsyncd` server running in the classic macOS environment, files can be sent from the host
+to the VM from a makefile or script, e.g.:
+`rsync -av -E thinkc-src rsync://192.168.64.3/incoming/`
+
+Only changed files are sent, which is much faster and less-error prone than syncing files by hand.
+
+There are two applications in the distribution:
 
 * **rsyncope**, the windowed app (`classic/gui`):
   * **rsync Bookmarks:** one window listing your saved syncs, like an FTP client's bookmarks. New… creates one. Double-clicking (or Edit…) opens it for review. Sync runs it, and Preview does a dry run.
@@ -19,8 +30,7 @@ See [`classic/USAGE.md`](classic/USAGE.md) for command-line examples, daemon set
 
 ## Requirements
 
-* A 68k Classic Mac running Mac OS 7.1 or 8.1
-* HFS storage and MacTCP DNR in the System Folder for host names
+* A 68k Classic Mac running Mac OS 7.1 or greater and MacTCP
 * An rsync daemon for remote transfers; ssh and rsync-over-ssh are not supported
 
 Real hardware and performance have not yet been tested.
@@ -31,70 +41,9 @@ Real hardware and performance have not yet been tested.
 
 Use rsync only over a trusted network or a separately secured tunnel/VPN. Prefer `read only = yes` for modules that do not need writes, restrict daemon access with a firewall or host allowlist, and do not transfer secrets over an untrusted network.
 
-## Layout
+## Development
 
-| Path | What |
-|---|---|
-| `classic/macposix/` | POSIX on the File Manager and MacTCP: paths, descriptors, directories, `rename` that keeps resource forks, sockets/`poll`, the `--netatalk` storage backend, C99 `printf`, stubs |
-| `classic/gui/` | The windowed application: `app.c` (event loop, menus, run queue, server), `bookmarks.c`, `editor.c`, `console.c`, `glue.c` |
-| `classic/rsync/` | The command engine shared by both apps (`engine.c`), the console app (`front.c`), 68k `config.h`, `SIZE` resource |
-| `openrsync/netatalk.c` | `--netatalk` mode (the virtual `._name` layer), shared with the Unix build |
-| `openrsync/hfsname.c` | UTF-8 to HFS names: MacRoman, 31-byte limit with hash-suffixed mangling, `:` to `/`, case collisions |
-| `classic/mptest/`, `classic/nettest/` | Self-tests that run inside Mac OS |
-| `classic/tests/` | Host tests (`make -C classic/tests check`): `--netatalk` and `--mac-types`/`--mac-text`/`--dst-window` end to end against a stock rsync daemon, name rules, printf |
-| `classic/emu/` | QEMU q800 scripts (`try-rsync.sh` for a client run, `try-daemon.sh` boots the Mac running the daemon and pushes to it through a forwarded port): boot unattended, run a test app or an rsync script, read the log back with `hfsutils` |
-| `classic/make-dist.sh` | Packages both apps as disk images and MacBinary |
-
-The About dialog is shared by both apps: `about.c` implements it and
-`about.r` defines its resources; each app supplies its own name. The GUI's
-other menus, dialog layouts, initial window and control definitions, and
-static interface text are in `classic/gui/gui.r`. Editor DITL item order must match
-the item enum in `classic/gui/editor.c`; window resizing, list contents, TextEdit,
-and dynamic control state remain in code.
-
-## Building
-
-```bash
-# Retro68 (68k only), once:
-git clone --recursive https://github.com/autc04/Retro68.git
-mkdir Retro68-build && cd Retro68-build && ../Retro68/build-toolchain.bash --no-ppc --no-carbon
-```
-
-```bash
-cmake -S classic -B build-classic \
-  -DCMAKE_TOOLCHAIN_FILE=$PWD/Retro68-build/toolchain/m68k-apple-macos/cmake/retro68.toolchain.cmake
-make -C build-classic        # build-classic/rsync/rsync.bin (MacBinary) and rsync.dsk
-make -C classic/tests check-version  # verify version resources in both apps
-```
-
-For distribution, run `make -C build-classic dist`. This builds both apps and
-places `rsyncope.img`, `rsyncope.dsk`, `rsyncope.bin`, and `rsync-console.bi  n`
-in `build-classic/dist/`, ready to upload to a GitHub release. It requires
-`hfsutils`. Both disk images contain the apps, Read Me, and sample configs.
-They are identical 4 MiB unpartitioned HFS volumes, not floppy-sized images;
-attaching them as QEMU SCSI disks may not mount them in Classic Mac OS.
-Unmount any previous images before rebuilding. The target replaces its output
-files and removes the obsolete `rsync-console.dsk` from earlier releases.
-Alternatively, `classic/make-dist.sh <out-dir>` packages existing builds
-and accepts optional paths to the GUI and console MacBinary files. The disk
-Read Me is maintained in `classic/readme.txt`; the samples are maintained
-in `classic/rsync-prefs.sample` and
-`classic/rsyncd.conf.sample`. Run
-`make -C classic/tests check-dist` to verify packaging with a fresh build.
-
-Retro68 can be built with either header set. The port is developed with the default, the Multiversal Interfaces. Apple's Universal Interfaces are used instead when they're installed in Retro68's `InterfacesAndLibraries` while building it; `classic/macposix/include/mactoolbox.h` picks the right headers for either. If a build with the Universal Interfaces trips on a missing name, rebuilding Retro68 with `--multiversal` is the known-good route.
-
-The Unix build of openrsync, which the host tests use, is `cd openrsync && ./configure && make`. Run it in a copy, because `configure` rewrites the checked-in `config.h`.
-
-## Testing in QEMU
-
-See [`classic/emu/README.md`](classic/emu/README.md) for the VM. The ROM and disk images are not in the repo. Then:
-
-```bash
-classic/emu/try-rsync.sh "rsync -av --delete rsync://10.0.2.2:8873/src/ :dest:"
-```
-
-This installs the built app in Startup Items, runs the command at boot, powers the Mac off, and prints `rsync log`. From QEMU's network, the host is 10.0.2.2.
+For information on project layout, building, and testing, see [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ## Status
 
