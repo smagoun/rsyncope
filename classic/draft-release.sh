@@ -63,4 +63,4 @@ if [ "$#" -eq 1 ]; then
     exit 1
 fi
 gh release create "$TAG" "$@" --draft --target "$COMMIT" \
-    --title "rsyncope $VERSION" --notes "Draft release for rsyncope $VERSION."
+    --title "rsyncope v$VERSION" --notes "Draft release for rsyncope v$VERSION."

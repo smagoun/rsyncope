@@ -1,6 +1,6 @@
 # rsyncope
 
-rsyncope is a port of `openrsync/` (Apple's current rsync, protocol 29) to Classic Mac OS, built with [Retro68](https://github.com/autc04/Retro68). It transfers files to or from an rsync daemon and keeps resource forks and Finder info. Only changed files are sent, which is much faster and less-error prone than syncing files by hand.
+rsyncope is a port of `openrsync` (Apple's current rsync, protocol 29) to Classic Mac OS, built with [Retro68](https://github.com/autc04/Retro68). It transfers files to or from an rsync daemon and keeps resource forks and Finder info. Only changed files are sent, which is much faster and less-error prone than syncing files by hand.
 
 ![rsyncope screenshot on MacOS 8.1](docs/rsyncope.png)
 
