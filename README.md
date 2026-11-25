@@ -1,6 +1,8 @@
 # rsyncope
 
-rsyncope is a port of `openrsync/` (Apple's current rsync, protocol 29) to Classic Mac OS, built with [Retro68](https://github.com/autc04/Retro68). It pulls a tree from an rsync daemon and keeps resource forks and Finder info. The design and the reasons behind it are in [`docs/CLASSIC_MACOS_PORT.md`](docs/CLASSIC_MACOS_PORT.md).
+rsyncope is a port of `openrsync/` (Apple's current rsync, protocol 29) to Classic Mac OS, built with [Retro68](https://github.com/autc04/Retro68). It transfers files to or from an rsync daemon and keeps resource forks and Finder info. Only changed files are sent, which is much faster and less-error prone than syncing files by hand.
+
+![rsyncope screenshot on MacOS 8.1](docs/rsyncope.png)
 
 ## Overview
 
@@ -9,11 +11,9 @@ rsyncope was built to streamline a development workflow for building macOS appli
 2. Copy (rsync) the files to a classic macOS environment like a VM to be compiled with a native
 compiler like THINK C
 
-With the `rsyncd` server running in the classic macOS environment, files can be sent from the host
+With the app's `rsyncd` server running in the classic macOS environment, files can be sent from the host
 to the VM from a makefile or script, e.g.:
 `rsync -av -E thinkc-src rsync://192.168.64.3/incoming/`
-
-Only changed files are sent, which is much faster and less-error prone than syncing files by hand.
 
 There are two applications in the distribution:
 
