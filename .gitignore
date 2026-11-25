@@ -34,3 +34,9 @@ xcuserdata/
 *.rom
 *.ROM
 *.qcow2
+*.raw
+
+# Misc
+*.bak
+*.tmp
+*.rsrc
